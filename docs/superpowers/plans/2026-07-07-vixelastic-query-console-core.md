@@ -832,7 +832,7 @@ export function resolveKeyPath(
         if (c.to <= pos) idx++;
         else break;
       }
-      path.unshift(String(Math.max(0, idx - (inKey ? 0 : 0))));
+      path.unshift(String(idx));
     }
   }
 
