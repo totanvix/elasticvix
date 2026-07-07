@@ -12,7 +12,7 @@ Người dùng đang dùng extension **elasticvue** nhưng thiếu hai thứ:
 1. **Gợi ý cú pháp query (autocomplete)** khi soạn Query DSL.
 2. **Lưu lại query** để tái sử dụng.
 
-Định hướng dài hạn là một GUI Elasticsearch đầy đủ **viết lại từ đầu** (không fork elasticvue) dưới dạng **Chrome extension**. Vì đây là dự án lớn nên được **chia nhỏ**; tài liệu này chỉ đặc tả **sub-project đầu tiên**:
+Định hướng dài hạn là một GUI Elasticsearch đầy đủ **viết lại từ đầu** (không fork elasticvue) dưới dạng **Chrome extension**. **Sản phẩm nhắm tới công khai lên Chrome Web Store** (không chỉ dùng cá nhân) → chất lượng, quyền hạn và quyền riêng tư phải đạt chuẩn store. Vì đây là dự án lớn nên được **chia nhỏ**; tài liệu này chỉ đặc tả **sub-project đầu tiên** (bản thân nó đã là extension độc lập hữu ích, có thể publish trước rồi mở rộng sau):
 
 > **Kết nối cluster tối thiểu + Query Console với autocomplete field-aware + lưu/quản lý query.**
 
@@ -27,17 +27,19 @@ Các mảng quản trị khác (index, document, mapping editor, node/shard, sna
 | Phạm vi sản phẩm | GUI thay thế elasticvue, **viết lại từ đầu** (chia nhỏ, làm Query Console trước) |
 | Đóng gói | **Chrome extension (Manifest V3)**, background service worker gọi ES để né CORS |
 | Giao diện chính | **Trang full-page** mở trong tab riêng khi click icon |
-| Framework UI | **React + shadcn/ui + Tailwind** |
+| Framework UI | **React 19 + mvpui** — cài theo README: `pnpm add github:tungmvp/mvp-ui#main`, import tokens `@mvp-ui/tokens/dist/index.css` + `tailwindcss` (Tailwind v4), dark mode `data-theme`. Accessibility: React Aria Components |
 | Khung dựng | **WXT** (MV3) + Vite, TypeScript strict, **pnpm** |
 | Editor | **CodeMirror 6** |
 | Mức autocomplete | **Cấp 3 — field-aware** (endpoint + DSL keyword theo ngữ cảnh + tên field/index thật từ mapping) |
 | Nguồn tri thức autocomplete | **Spec tự biên tập** (JSON gọn, có thể seed từ spec chính thức của Elastic) |
-| Phiên bản ES hỗ trợ | **6, 7, 8, 9** — detect version lúc connect, thích ứng phần khác biệt |
+| Phiên bản ES hỗ trợ | **6.x (gồm 6.5), 7.x, 8.x = làm tốt & test kỹ** · **9.x = best-effort**. Detect version lúc connect, thích ứng khác biệt 6.x (mapping `_type`, path CRUD có type) |
 | Xác thực | **none, basic, API key, bearer** |
 | Đa cluster | Lưu nhiều connection, chuyển đổi qua lại |
 | Lưu query | Query có **tên + tags + tìm kiếm**, kèm **lịch sử tự động** |
 | Đơn vị soạn thảo | **Một request mỗi editor** cho v1 (multi-request scratchpad để sau) |
+| Sáng/tối | **Hỗ trợ light/dark** ngay v1 (mvpui `data-theme`, chi phí thấp) |
 | Kiểm thử | TDD + coverage cao cho **logic thuần**; kiểm thử tay cho UI; **bỏ e2e nặng** ở v1 |
+| Phân phối | **Công khai lên Chrome Web Store** — quyền tối thiểu (optional host perms) + privacy policy |
 
 ---
 
@@ -46,7 +48,7 @@ Các mảng quản trị khác (index, document, mapping editor, node/shard, sna
 **Ba khối chính:**
 
 ### 3.1 Background service worker — "cổng gọi ES"
-Toàn bộ request tới Elasticsearch đi qua đây để né CORS. `host_permissions` xin theo host người dùng nhập (không xin bừa `<all_urls>`). Đây là nơi **duy nhất** chạm mạng.
+Toàn bộ request tới Elasticsearch đi qua đây để né CORS. Vì sản phẩm public, **không khai host cố định** mà dùng **optional host permissions xin động** khi người dùng thêm connection (`chrome.permissions.request` cho origin của host đó) — tránh xin `<all_urls>`, dễ được Chrome review duyệt. Đây là nơi **duy nhất** chạm mạng.
 
 API RPC (UI ↔ background qua `chrome.runtime` message, bọc trong lớp typed nhỏ):
 
@@ -59,11 +61,11 @@ fetchMapping(connectionId, index) → { fields: FlatField[] }   // có cache
 Service worker tự gắn header auth đã resolve, `fetch` tới ES, trả kết quả thô về UI.
 
 ### 3.2 UI — trang full-page (React)
-Click icon → `chrome.action.onClicked` → mở tab `chrome-extension://.../console.html`. Đây là toàn bộ ứng dụng console. **Không dùng content script** (không nhúng vào trang web nào), nên CSP sạch, Tailwind/shadcn không xung đột.
+Click icon → `chrome.action.onClicked` → mở tab `chrome-extension://.../console.html`. Đây là toàn bộ ứng dụng console. **Không dùng content script** (không nhúng vào trang web nào), nên CSP sạch, Tailwind v4/mvpui không xung đột với trang ngoài.
 
 ### 3.3 Lớp Storage
 - **Connections** (kèm secret) + `activeConnectionId` + `settings` → `chrome.storage.local`.
-  - ⚠️ **Caveat:** `chrome.storage.local` *không mã hoá*, chỉ nằm trong profile Chrome. Chấp nhận được cho tool cá nhân; ghi rõ để người dùng biết.
+  - ⚠️ **Caveat (quan trọng vì public):** `chrome.storage.local` *không mã hoá*, chỉ nằm trong profile Chrome, **không gửi đi đâu**. Cần nói rõ trong privacy policy + UI (mọi dữ liệu ở local, không telemetry). Tương tự cách elasticvue lưu — chấp nhận được.
 - **Saved queries, History, Mapping cache** → **IndexedDB** (lib `idb`), vì tích luỹ nhiều và cần search/lọc tag.
 
 ### 3.4 Luồng chạy một query
@@ -98,7 +100,7 @@ type Connection = {
   name: string
   baseUrl: string                        // https://host:9200
   auth: AuthConfig
-  version?: string                       // detect lúc connect, vd "8.13.0"
+  version?: string                       // detect lúc connect, vd "6.5.4"
   major?: 6 | 7 | 8 | 9
   createdAt: number
   updatedAt: number
@@ -175,17 +177,20 @@ type FlatField = {
 }
 ```
 
-Quy ước: `@field` = bơm tên field từ mapping · `#ref` = tham chiếu node khác · `[#x]` = mảng của x. Có thể **seed từ spec chính thức của Elastic** để phủ nhanh, rồi tỉa lại (tuỳ chọn, không bắt buộc cho v1).
+Quy ước: `@field` = bơm tên field từ mapping · `#ref` = tham chiếu node khác · `[#x]` = mảng của x. Có thể **seed từ spec chính thức của Elastic** để phủ nhanh, rồi tỉa lại (tuỳ chọn, không bắt buộc v1).
 
-**Phạm vi phủ tối thiểu ở v1:** endpoint `_search`, `_count`, `_mapping`, `_cat/indices`, và CRUD document (`_doc`/`_bulk`); phần Query DSL cốt lõi: `bool`, `match`, `match_phrase`, `term`, `terms`, `range`, `exists`, `match_all`, cùng `size/from/sort/_source/aggs` ở cấp thân request. Ngoài danh sách này chấp nhận thiếu và mở rộng dần.
+**Phạm vi phủ tối thiểu ở v1:** endpoint `_search`, `_count`, `_mapping`, `_cat/indices`, CRUD document (`_doc`/`_bulk`); Query DSL cốt lõi: `bool`, `match`, `match_phrase`, `term`, `terms`, `range`, `exists`, `match_all`, cùng `size/from/sort/_source/aggs` ở cấp thân request. Ngoài danh sách này chấp nhận thiếu và mở rộng dần.
 
 ### 5.4 Thích ứng version
-- Spec nền theo ~8.x.
-- ES6 có tầng `_type` trong mapping → bước làm phẳng mapping xử lý riêng.
-- Khác biệt DSL vụn giữa 6→9 tạm bỏ qua; thêm guard sau khi cần.
+- **Ưu tiên test kỹ: 6.x (gồm 6.5 — môi trường legacy đang dùng ở công ty), 7.x, 8.x.** 9.x best-effort.
+- Spec nền theo ~7.x/8.x (Query DSL cốt lõi ổn định 6→8).
+- **ES 6.x khác biệt cần xử lý riêng theo `major`:**
+  - Mapping có tầng `_type` → bước làm phẳng mapping bóc thêm một lớp.
+  - CRUD document có type trong path (`PUT /index/type/id`) thay vì `/index/_doc/id` → engine sinh path + gợi ý theo `major`.
+- Khác biệt DSL vụn khác tạm bỏ qua; thêm guard theo `major` khi cần.
 
 ### 5.5 Làm phẳng mapping
-Duyệt `properties`, đệ quy `object`/`nested` → path chấm (`user.address.city`) kèm `type`.
+Duyệt `properties`, đệ quy `object`/`nested` → path chấm (`user.address.city`) kèm `type`. Với ES 6.x bóc thêm tầng `_type` trước khi vào `properties`.
 
 ### 5.6 Tích hợp CodeMirror
 Một `completion source` custom nạp vào `autocompletion({ override: [...] })`, trả về `label` + `type` (keyword/field/snippet) + `info` + `apply` dạng snippet cho các khung.
@@ -196,7 +201,7 @@ Một `completion source` custom nạp vào `autocompletion({ override: [...] })
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ [▼ prod-cluster ●8.13]                              [⚙ Settings] │
+│ [▼ prod-cluster ●8.13]                       [🌗] [⚙ Settings]   │
 ├──────────────┬─────────────────────────┬───────────────────────┤
 │ Saved | Hist │  GET /logs-*/_search     │  200 · 34ms   [Copy]  │
 │ ─────────────│  {                       │  {                    │
@@ -213,6 +218,8 @@ Một `completion source` custom nạp vào `autocompletion({ override: [...] })
 - **Editor:** dòng request + body; nút **Run (⌘/Ctrl+Enter)**, **Save** (dialog: tên + tags), **Format** (prettify JSON).
 - **Response:** JSON đẹp (CodeMirror read-only), badge status + took ms + Copy.
 - **Connection switcher:** dropdown; dialog "Add connection" gồm name, baseUrl, chọn auth → field tương ứng, nút **Test** (gọi detectVersion), chấm xanh/đỏ + version.
+- **Sáng/tối:** dùng dark mode sẵn của mvpui (`data-theme`); theme CodeMirror bám theo token sáng/tối của mvpui. Toggle 🌗 ở top bar.
+- **Component:** ưu tiên dùng component có sẵn của mvpui (button, input, dialog/modal, tabs, drawer, select...) để đồng nhất design tokens.
 
 ---
 
@@ -222,21 +229,23 @@ Một `completion source` custom nạp vào `autocompletion({ override: [...] })
 - **JSON body sai** trước khi Run → lint inline (CodeMirror JSON linter) + cảnh báo, nhưng **vẫn cho chạy** (không chặn cứng).
 - **Mapping fetch lỗi** → autocomplete field-aware lặng lẽ vắng mặt, endpoint/DSL vẫn chạy. **Không bao giờ chặn việc gõ.**
 - **Detect version lỗi** → đánh dấu unknown, vẫn cho gửi request.
+- **Chưa cấp host permission** → khi thêm/kết nối cluster mà origin chưa được cấp, hiện lời nhắc xin quyền (`chrome.permissions.request`); từ chối thì báo rõ không kết nối được.
 - **HTTPS self-signed cert:** Chrome extension **không thể** bỏ qua kiểm tra cert như app desktop → người dùng phải trust cert ở trình duyệt/OS. Giới hạn cố hữu của hướng extension, hiển thị thông báo hướng dẫn khi gặp lỗi cert.
 
 ---
 
 ## 8. Kiểm thử (lệch khỏi quy tắc mặc định — đã được duyệt)
 
-Quy tắc chung yêu cầu 80% coverage + TDD + e2e. Với extension cá nhân, e2e đầy đủ là quá sức so với giá trị. Thay vào đó:
+Quy tắc chung yêu cầu 80% coverage + TDD + e2e. Với một extension MV3, e2e đầy đủ (Playwright load extension) tốn kém so với giá trị ở giai đoạn v1. Thay vào đó:
 
 - **TDD + coverage cao** cho **logic thuần** (giá trị nhất, dễ test nhất), chạy bằng **Vitest**:
   - autocomplete engine: resolve key-path từ JSON + con trỏ, tra spec, bơm field
   - làm phẳng mapping (gồm nhánh ES6 `_type`)
   - builder header auth (từng loại auth)
+  - sinh path CRUD theo `major` (6.x có type)
   - repository saved query / history (dùng `fake-indexeddb`)
   - kiểm tra tính hợp lệ của spec tự biên tập
-- **Kiểm thử tay theo checklist** cho phần UI extension.
+- **Kiểm thử tay theo checklist** cho phần UI extension, test thật trên **ES 6.5, 7.x, 8.x**.
 - **Bỏ e2e nặng ở v1** (Playwright load extension) — ghi là tùy chọn tương lai.
 
 ---
@@ -250,12 +259,15 @@ Quy tắc chung yêu cầu 80% coverage + TDD + e2e. Với extension cá nhân, 
 - Import/export saved queries
 - Đồng bộ nhiều máy (mọi thứ đang lưu local)
 - Biến/template trong query
+- **Nộp store thực tế** (listing, screenshot, review) — bước nối tiếp sau khi code v1 xong; nhưng code v1 phải tuân thủ sẵn chuẩn store.
 
 ---
 
 ## 10. Rủi ro & lưu ý
 
 - **Độ phủ spec autocomplete:** spec tự biên tập ban đầu chỉ phủ phần hay dùng; cần chấp nhận không đầy đủ và mở rộng dần. Seed từ spec Elastic giúp giảm rủi ro này.
-- **Dải version rộng (6→9):** chỉ đảm bảo phần Query DSL cốt lõi + mapping; không cam kết độ chính xác từng phiên bản.
-- **Bảo mật secret:** lưu plaintext trong `chrome.storage.local` — chấp nhận cho tool cá nhân, không dùng cho môi trường chia sẻ máy.
+- **Dải version rộng (6→9):** đảm bảo & test kỹ 6.x/7.x/8.x (Query DSL cốt lõi + mapping + CRUD path theo type ở 6.x); 9.x best-effort, không cam kết độ chính xác từng phiên bản.
+- **Bảo mật secret:** lưu plaintext trong `chrome.storage.local`; vì public phải minh bạch trong privacy policy + UI (dữ liệu ở local, không gửi đi). Không phù hợp cho máy dùng chung.
+- **Sẵn sàng lên store:** cần quyền tối thiểu (optional host perms thay vì `<all_urls>`), privacy policy, icon + mô tả + screenshot, không nạp remote code, MV3 hợp lệ.
+- **mvpui là design system cá nhân:** cài theo README (`github:tungmvp/mvp-ui#main`, scope `@mvp-ui/*`); hệ sinh thái/tài liệu nhỏ hơn shadcn, phụ thuộc một git repo → **pin commit** để build ổn định.
 - **CodeMirror JSON incomplete parsing:** cần xử lý cẩn thận trường hợp JSON dở khi resolve key-path để autocomplete không vỡ.
