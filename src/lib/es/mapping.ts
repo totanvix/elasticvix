@@ -29,13 +29,16 @@ export function flattenProperties(
 }
 
 export function flattenMapping(mappingsForIndex: unknown): FlatField[] {
-  const m = mappingsForIndex as { properties?: Record<string, MappingNode> } & Record<string, any>;
-  if (m && m.properties) return flattenProperties(m.properties); // ES7+
+  const m = (mappingsForIndex ?? {}) as Record<string, unknown>;
+  const props = m.properties;
+  if (props && typeof props === 'object') {
+    return flattenProperties(props as Record<string, MappingNode>); // ES7+
+  }
   const out: FlatField[] = []; // ES6: iterate the (usually single) type
-  for (const key of Object.keys(m ?? {})) {
+  for (const key of Object.keys(m)) {
     const node = m[key];
-    if (node && typeof node === 'object' && node.properties) {
-      out.push(...flattenProperties(node.properties));
+    if (node && typeof node === 'object' && 'properties' in node) {
+      out.push(...flattenProperties((node as { properties?: Record<string, MappingNode> }).properties));
     }
   }
   return out;
