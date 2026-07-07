@@ -26,4 +26,12 @@ describe('resolveKeyPath', () => {
     expect(r.path).toEqual(['query', 'exists', 'field']);
     expect(r.inKey).toBe(false);
   });
+  it('detects a key position while typing an unterminated key on incomplete JSON', () => {
+    // Live-typing: cursor at the very end of an in-progress, still-unterminated key
+    // one level under `query`. We should suggest keys valid inside `query`.
+    const { state, pos } = stateAt('{ "query": { "bo|');
+    const r = resolveKeyPath(state, pos);
+    expect(r.path).toEqual(['query']);
+    expect(r.inKey).toBe(true);
+  });
 });
