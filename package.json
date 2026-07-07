@@ -8,7 +8,8 @@
     "build": "wxt build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "compile": "tsc --noEmit"
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare"
   },
   "keywords": [],
   "author": "",
