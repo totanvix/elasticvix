@@ -1,0 +1,37 @@
+{
+  "endpoints": {
+    "_search": { "methods": ["GET", "POST"], "bodyRef": "queryBody" },
+    "_count":  { "methods": ["GET", "POST"], "bodyRef": "queryBody" },
+    "_mapping": { "methods": ["GET"] },
+    "_doc": { "methods": ["GET", "POST", "PUT", "DELETE"] },
+    "_bulk": { "methods": ["POST", "PUT"] }
+  },
+  "bodies": {
+    "queryBody": {
+      "query": "#query", "size": "int", "from": "int",
+      "sort": "[#sortItem]", "_source": "any", "aggs": "#aggs"
+    },
+    "query": {
+      "bool": "#bool", "match": "#matchQ", "match_phrase": "#matchQ",
+      "term": "#termQ", "terms": "#termsQ", "range": "#rangeQ",
+      "exists": "#existsQ", "match_all": {}
+    },
+    "bool": {
+      "must": "[#query]", "should": "[#query]", "filter": "[#query]",
+      "must_not": "[#query]", "minimum_should_match": "any"
+    },
+    "matchQ": { "@field": "#matchOpts" },
+    "matchOpts": { "query": "any", "operator": "enum:or,and", "fuzziness": "any" },
+    "termQ": { "@field": "any" },
+    "termsQ": { "@field": "any" },
+    "rangeQ": { "@field": "#rangeOpts" },
+    "rangeOpts": { "gte": "any", "lte": "any", "gt": "any", "lt": "any", "format": "string", "boost": "int" },
+    "existsQ": { "field": "@field" },
+    "sortItem": { "@field": "#sortOpts" },
+    "sortOpts": { "order": "enum:asc,desc", "mode": "enum:min,max,sum,avg,median" },
+    "aggs": { "@any": "#aggBody" },
+    "aggBody": { "terms": "#aggTerms", "avg": "#aggFieldOnly", "sum": "#aggFieldOnly", "max": "#aggFieldOnly", "min": "#aggFieldOnly" },
+    "aggTerms": { "field": "@field", "size": "int" },
+    "aggFieldOnly": { "field": "@field" }
+  }
+}
