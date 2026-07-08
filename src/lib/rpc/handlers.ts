@@ -14,11 +14,17 @@ async function doEs(
   conn: Connection, method: string, path: string, body: string | undefined, fetchFn: typeof fetch,
 ): Promise<EsResult> {
   const start = Date.now();
+  // ES commonly sends a query body with GET /_search, but the Fetch API forbids
+  // a GET/HEAD body. Mirror Kibana Dev Tools: promote such calls to POST so the
+  // body is not silently dropped. Uppercase first so a lowercase verb can't slip.
+  const upper = method.toUpperCase();
+  const hasBody = body != null && body !== '';
+  const effectiveMethod = hasBody && (upper === 'GET' || upper === 'HEAD') ? 'POST' : upper;
   try {
     const resp = await fetchFn(urlOf(conn, path), {
-      method,
+      method: effectiveMethod,
       headers: { 'content-type': 'application/json', ...buildAuthHeaders(conn.auth) },
-      body: body && method !== 'GET' && method !== 'HEAD' ? body : undefined,
+      body: hasBody && effectiveMethod !== 'GET' && effectiveMethod !== 'HEAD' ? body : undefined,
     });
     const text = await resp.text();
     let parsed: unknown = text;
@@ -39,6 +45,7 @@ export async function handleRpc(msg: RpcRequest, deps: HandlerDeps = {}): Promis
   if (msg.kind === 'detectVersion') {
     const r = await doEs(msg.connection, 'GET', '/', undefined, fetchFn);
     if (r.error || r.status === 0) return { kind: 'detectVersion', result: { error: r.error ?? 'unreachable' } };
+    if (r.status >= 400) return { kind: 'detectVersion', result: { error: `status ${r.status}` } };
     const version = (r.body as { version?: { number?: string } } | null)?.version?.number;
     return { kind: 'detectVersion', result: { version, major: version ? parseMajor(version) : undefined } };
   }

@@ -51,4 +51,24 @@ describe('handleRpc', () => {
       expect(res.result.error).toContain('Failed to fetch');
     }
   });
+
+  it('esRequest promotes GET-with-body to POST and keeps the body', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { took: 1, hits: {} }));
+    await handleRpc(
+      { kind: 'esRequest', connection: conn, method: 'GET', path: '/x/_search', body: '{"query":{"match":{"a":"b"}}}' },
+      { fetchFn },
+    );
+    const [, init] = fetchFn.mock.calls[0]!;
+    expect(init.method).toBe('POST');
+    expect(init.body).toBe('{"query":{"match":{"a":"b"}}}');
+  });
+
+  it('detectVersion surfaces an HTTP error (e.g. 401) instead of soft success', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(401, { error: 'unauthorized' }));
+    const res = await handleRpc({ kind: 'detectVersion', connection: conn }, { fetchFn });
+    if (res.kind === 'detectVersion') {
+      expect(res.result.error).toBe('status 401');
+      expect(res.result.version).toBeUndefined();
+    }
+  });
 });
