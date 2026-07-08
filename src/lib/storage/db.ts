@@ -17,7 +17,7 @@ let dbPromise: Promise<IDBPDatabase<VixSchema>> | undefined;
 
 export function getDb(): Promise<IDBPDatabase<VixSchema>> {
   if (!dbPromise) {
-    dbPromise = openDB<VixSchema>('vixelastic', 1, {
+    dbPromise = openDB<VixSchema>('elasticvix', 1, {
       upgrade(db) {
         db.createObjectStore('savedQueries', { keyPath: 'id' });
         const hist = db.createObjectStore('history', { keyPath: 'id' });
