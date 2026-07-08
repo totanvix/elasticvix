@@ -1,21 +1,33 @@
+import { Moon, Sun } from 'lucide-react';
+import { ThemeProvider, useTheme } from './theme';
+import { ConsoleLayout } from './layout/ConsoleLayout';
 import { Button } from './ui/button';
 
-export function App() {
-  const toggleDark = () => document.documentElement.classList.toggle('dark');
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
   return (
-    <div className="min-h-screen space-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Elasticvix</h1>
-        <Button variant="outline" size="sm" onClick={toggleDark}>
-          Toggle theme
-        </Button>
-      </div>
-      <p className="text-muted-foreground">shadcn/ui + Tailwind v4 + Be Vietnam Pro</p>
-      <div className="flex gap-2">
-        <Button>Primary</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="secondary">Secondary</Button>
-      </div>
-    </div>
+    <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
+      {theme === 'dark' ? <Sun /> : <Moon />}
+    </Button>
+  );
+}
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <ConsoleLayout
+        topBar={
+          <>
+            <span className="text-lg font-semibold">Elasticvix</span>
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
+          </>
+        }
+        leftRail={<div className="p-3 text-sm text-muted-foreground">Saved / History (Task 7–8)</div>}
+        editor={<div className="p-3 text-sm text-muted-foreground">Editor (Task 5)</div>}
+        response={<div className="p-3 text-sm text-muted-foreground">Response (Task 6)</div>}
+      />
+    </ThemeProvider>
   );
 }
