@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { spec } from './spec';
-import { resolveCompletions } from './engine';
+import { resolveCompletions, docCompletions } from './engine';
 import type { FlatField } from '../types';
 
 const fields: FlatField[] = [
@@ -35,5 +35,28 @@ describe('resolveCompletions', () => {
   it('offers enum values in a value position (sort order)', () => {
     const items = resolveCompletions(spec, 'queryBody', ['sort', '0', 'anyField', 'order'], false, fields);
     expect(items.map((c) => c.label)).toEqual(['asc', 'desc']);
+  });
+});
+
+describe('docCompletions (whole request-line + body document)', () => {
+  const oneField: FlatField[] = [{ path: 'title', type: 'text' }];
+
+  it('suggests bool clauses when the cursor is in the body of a GET _search', () => {
+    const doc = 'GET /logs-*/_search\n{ "query": { "bool": { "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    const labels = docCompletions(doc, pos, oneField).map((c) => c.label);
+    expect(labels).toEqual(expect.arrayContaining(['must', 'should', 'filter', 'must_not']));
+  });
+
+  it('injects real field names in a field-key position (match)', () => {
+    const doc = 'POST /logs-*/_search\n{ "query": { "match": { "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    const items = docCompletions(doc, pos, oneField);
+    expect(items).toEqual([{ label: 'title', kind: 'field', detail: 'text' }]);
+  });
+
+  it('returns [] when the cursor is on the request line (line 1)', () => {
+    const doc = 'GET /logs-*/_search\n{ }';
+    expect(docCompletions(doc, 3, oneField)).toEqual([]);
   });
 });

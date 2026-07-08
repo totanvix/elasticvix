@@ -1,4 +1,6 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { EditorState } from '@codemirror/state';
+import { json } from '@codemirror/lang-json';
 import type { FlatField } from '../types';
 import { spec as defaultSpec, type SpecData, type BodyNode, type ValueDesc } from './spec';
 import { resolveKeyPath } from './keyPath';
@@ -73,29 +75,40 @@ export function resolveCompletions(
   return [];
 }
 
+// Compute completions for a whole editor document: line 1 is `METHOD /path`,
+// the remaining lines are the JSON body. Only the body sub-range is parsed as
+// JSON — line 1 is not JSON and would corrupt the syntax tree.
+export function docCompletions(docText: string, pos: number, fields: FlatField[]): CompletionItem[] {
+  const nl = docText.indexOf('\n');
+  if (nl === -1 || pos <= nl) return []; // still on the request line (or no body)
+
+  const { endpoint } = parseRequestLine(docText.slice(0, nl));
+  const rootRef = endpoint ? defaultSpec.endpoints[endpoint]?.bodyRef : undefined;
+  if (!rootRef) return [];
+
+  const bodyStart = nl + 1;
+  const bodyState = EditorState.create({ doc: docText.slice(bodyStart), extensions: [json()] });
+  const { path, inKey } = resolveKeyPath(bodyState, pos - bodyStart);
+  return resolveCompletions(defaultSpec, rootRef, path, inKey, fields);
+}
+
 const KIND_TO_CM: Record<CompletionItem['kind'], string> = {
   keyword: 'keyword',
   field: 'property',
   value: 'enum',
 };
 
-// CodeMirror completion source used by the UI (Plan 2).
+// CodeMirror completion source used by the UI (Plan 2). `getFields` resolves the
+// target index's fields (from cache or a fresh _mapping fetch).
 export function esCompletionSource(getFields: (index?: string) => Promise<FlatField[]>) {
   return async (ctx: CompletionContext): Promise<CompletionResult | null> => {
-    const firstLine = ctx.state.doc.line(1).text;
-    const cursorLine = ctx.state.doc.lineAt(ctx.pos).number;
+    const docText = ctx.state.doc.toString();
+    const nl = docText.indexOf('\n');
+    if (nl === -1 || ctx.pos <= nl) return null;
 
-    // Request line (line 1): endpoint/method completion is minimal here; body is the focus.
-    if (cursorLine === 1) return null;
-
-    const { endpoint, index } = parseRequestLine(firstLine);
-    const ep = endpoint ? defaultSpec.endpoints[endpoint] : undefined;
-    const rootRef = ep?.bodyRef;
-    if (!rootRef) return null;
-
-    const { path, inKey } = resolveKeyPath(ctx.state, ctx.pos);
+    const { index } = parseRequestLine(docText.slice(0, nl));
     const fields = await getFields(index);
-    const items = resolveCompletions(defaultSpec, rootRef, path, inKey, fields);
+    const items = docCompletions(docText, ctx.pos, fields);
     if (items.length === 0) return null;
 
     const word = ctx.matchBefore(/[\w.]*/);
