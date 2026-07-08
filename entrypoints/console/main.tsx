@@ -1,2 +1,5 @@
 import { createRoot } from 'react-dom/client';
-createRoot(document.getElementById('root')!).render(<div>Elasticvix console (UI in Plan 2)</div>);
+import { App } from '../../src/console/App';
+import '../../src/console/styles.css';
+
+createRoot(document.getElementById('root')!).render(<App />);

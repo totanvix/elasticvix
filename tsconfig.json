@@ -3,7 +3,6 @@
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "jsx": "react-jsx",
-    "paths": { "@/*": ["./src/*"] }
+    "jsx": "react-jsx"
   }
 }
