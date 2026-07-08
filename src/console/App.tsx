@@ -4,6 +4,9 @@ import { ConsoleLayout } from './layout/ConsoleLayout';
 import { Button } from './ui/button';
 import { useConnections } from './connections/useConnections';
 import { ConnectionSwitcher } from './connections/ConnectionSwitcher';
+import { useConsoleRun } from './editor/useConsoleRun';
+import { QueryEditor } from './editor/QueryEditor';
+import { ResponseView } from './editor/ResponseView';
 
 function ThemeToggle() {
   const { theme, toggle } = useTheme();
@@ -16,6 +19,8 @@ function ThemeToggle() {
 
 function ConsoleInner() {
   const conns = useConnections();
+  const runner = useConsoleRun(conns.active);
+
   return (
     <ConsoleLayout
       topBar={
@@ -36,8 +41,18 @@ function ConsoleInner() {
         </>
       }
       leftRail={<div className="p-3 text-sm text-muted-foreground">Saved / History (Task 7–8)</div>}
-      editor={<div className="p-3 text-sm text-muted-foreground">Editor (Task 5)</div>}
-      response={<div className="p-3 text-sm text-muted-foreground">Response (Task 6)</div>}
+      editor={
+        <QueryEditor
+          active={conns.active}
+          text={runner.text}
+          onChange={runner.setText}
+          onRun={runner.run}
+          isRunning={runner.isRunning}
+          onFormat={runner.format}
+          onSave={() => {}}
+        />
+      }
+      response={<ResponseView response={runner.response} />}
     />
   );
 }
