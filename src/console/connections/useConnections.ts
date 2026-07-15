@@ -53,9 +53,13 @@ export function useConnections() {
   const remove = useCallback(
     async (id: string) => {
       await deleteConnection(id);
+      if (id === activeId) {
+        const list = await listConnections();
+        await setActiveConnectionId(list[0]?.id);
+      }
       await reload();
     },
-    [reload],
+    [activeId, reload],
   );
 
   const test = useCallback(
