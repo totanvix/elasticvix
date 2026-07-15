@@ -61,7 +61,7 @@ export function ClusterSelector({ connections, active, onSelect, onSave, onDelet
                 className="flex-1 truncate text-left"
                 onClick={() => {
                   onSelect(c.id);
-                  setOpen(false);
+                  handleOpenChange(false);
                 }}
               >
                 {c.name}
