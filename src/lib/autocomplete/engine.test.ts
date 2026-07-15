@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { spec } from './spec';
-import { resolveCompletions, docCompletions } from './engine';
+import { resolveCompletions, docCompletions, bodyCompletions } from './engine';
 import type { FlatField } from '../types';
 
 const fields: FlatField[] = [
@@ -58,5 +58,22 @@ describe('docCompletions (whole request-line + body document)', () => {
   it('returns [] when the cursor is on the request line (line 1)', () => {
     const doc = 'GET /logs-*/_search\n{ }';
     expect(docCompletions(doc, 3, oneField)).toEqual([]);
+  });
+});
+
+describe('bodyCompletions (body-only Search page document)', () => {
+  const oneField: FlatField[] = [{ path: 'title', type: 'text' }];
+
+  it('suggests top-level _search keys at the root', () => {
+    const doc = '{ "" }';
+    const pos = doc.indexOf('""') + 1;
+    const labels = bodyCompletions(doc, pos, oneField).map((c) => c.label);
+    expect(labels).toEqual(expect.arrayContaining(['query', 'size', 'from', 'sort', 'aggs']));
+  });
+
+  it('injects real field names in a field-key position (match)', () => {
+    const doc = '{ "query": { "match": { "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    expect(bodyCompletions(doc, pos, oneField)).toEqual([{ label: 'title', kind: 'field', detail: 'text' }]);
   });
 });

@@ -98,6 +98,31 @@ const KIND_TO_CM: Record<CompletionItem['kind'], string> = {
   value: 'enum',
 };
 
+// Compute completions for a body-only document (Search page): the whole doc is
+// the JSON body of a `_search` request — there is no request line to strip.
+export function bodyCompletions(docText: string, pos: number, fields: FlatField[]): CompletionItem[] {
+  const rootRef = defaultSpec.endpoints['_search']?.bodyRef ?? 'queryBody';
+  const state = EditorState.create({ doc: docText, extensions: [json()] });
+  const { path, inKey } = resolveKeyPath(state, pos);
+  return resolveCompletions(defaultSpec, rootRef, path, inKey, fields);
+}
+
+// CodeMirror source for the Search page editor. `getFields` is already scoped
+// to the selected indices by the caller, so it takes no index argument.
+export function bodyCompletionSource(getFields: () => Promise<FlatField[]>) {
+  return async (ctx: CompletionContext): Promise<CompletionResult | null> => {
+    const fields = await getFields();
+    const items = bodyCompletions(ctx.state.doc.toString(), ctx.pos, fields);
+    if (items.length === 0) return null;
+
+    const word = ctx.matchBefore(/[\w.]*/);
+    return {
+      from: word ? word.from : ctx.pos,
+      options: items.map((it) => ({ label: it.label, type: KIND_TO_CM[it.kind], detail: it.detail })),
+    };
+  };
+}
+
 // CodeMirror completion source used by the UI (Plan 2). `getFields` resolves the
 // target index's fields (from cache or a fresh _mapping fetch).
 export function esCompletionSource(getFields: (index?: string) => Promise<FlatField[]>) {
