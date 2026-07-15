@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Connection } from '../../lib/types';
 import type { EsResult } from '../../lib/rpc/messages';
 import { esRequest } from '../../lib/rpc/client';
@@ -48,11 +48,13 @@ export function useSearch(active: Connection | undefined) {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(DEFAULT_SIZE);
   const [inputError, setInputError] = useState<string | undefined>(undefined);
+  const runSeq = useRef(0);
 
   const activeId = active?.id;
 
   // Reload persisted selection + query whenever the active connection changes.
   useEffect(() => {
+    runSeq.current += 1;
     const persisted = activeId ? loadPersisted(activeId) : { selected: [], queryText: DEFAULT_QUERY };
     setSelected(persisted.selected);
     setQueryText(persisted.queryText);
@@ -88,15 +90,17 @@ export function useSearch(active: Connection | undefined) {
         return;
       }
       setInputError(undefined);
+      const seq = ++runSeq.current;
       setRunning(true);
       try {
         const result = await esRequest(active, 'POST', buildSearchPath(selected), body);
+        if (seq !== runSeq.current) return;
         setResponse(result);
         setTotal(result.status >= 200 && result.status < 300 ? normalizeTotal(result.body) : undefined);
         setPage(nextPage);
         setSize(nextSize);
       } finally {
-        setRunning(false);
+        if (seq === runSeq.current) setRunning(false);
       }
     },
     [active, selected, queryText],

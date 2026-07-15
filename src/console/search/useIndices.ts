@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Connection } from '../../lib/types';
 import { esRequest } from '../../lib/rpc/client';
 import { parseCatIndices, type IndexInfo } from './indicesLib';
@@ -9,6 +9,7 @@ export function useIndices(active: Connection | undefined) {
   const [indices, setIndices] = useState<IndexInfo[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
+  const loadSeq = useRef(0);
 
   const reload = useCallback(async () => {
     if (!active) {
@@ -16,10 +17,12 @@ export function useIndices(active: Connection | undefined) {
       setError(undefined);
       return;
     }
+    const seq = ++loadSeq.current;
     setLoading(true);
     setError(undefined);
     try {
       const res = await esRequest(active, 'GET', CAT_INDICES_PATH);
+      if (seq !== loadSeq.current) return;
       if (res.error) {
         setIndices([]);
         setError(res.error);
@@ -30,10 +33,12 @@ export function useIndices(active: Connection | undefined) {
         setIndices(parseCatIndices(res.body));
       }
     } catch (e) {
-      setIndices([]);
-      setError(e instanceof Error ? e.message : 'Failed to load indices');
+      if (seq === loadSeq.current) {
+        setIndices([]);
+        setError(e instanceof Error ? e.message : 'Failed to load indices');
+      }
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, [active]);
 
