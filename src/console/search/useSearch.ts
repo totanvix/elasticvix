@@ -62,6 +62,7 @@ export function useSearch(active: Connection | undefined) {
     setTotal(undefined);
     setPage(1);
     setInputError(undefined);
+    setRunning(false);
   }, [activeId]);
 
   const selectIndices = useCallback(

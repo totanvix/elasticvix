@@ -12,12 +12,13 @@ export function useIndices(active: Connection | undefined) {
   const loadSeq = useRef(0);
 
   const reload = useCallback(async () => {
+    loadSeq.current += 1;
     if (!active) {
       setIndices([]);
       setError(undefined);
       return;
     }
-    const seq = ++loadSeq.current;
+    const seq = loadSeq.current;
     setLoading(true);
     setError(undefined);
     try {
