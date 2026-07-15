@@ -43,11 +43,12 @@ export function useConnections() {
 
   const addOrUpdate = useCallback(
     async (conn: Connection) => {
+      const isNew = !connections.some((c) => c.id === conn.id);
       await saveConnection(conn);
       await reload();
-      await setActive(conn.id);
+      if (isNew) await setActive(conn.id);
     },
-    [reload, setActive],
+    [connections, reload, setActive],
   );
 
   const remove = useCallback(
