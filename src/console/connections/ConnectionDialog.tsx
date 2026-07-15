@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import type { AuthConfig, Connection, EsMajor } from '../../lib/types';
 import { newId } from '../ids';
 import type { TestResult } from './useConnections';
+import { initialAuthFields } from './authFields';
 
 type Props = {
   isOpen: boolean;
@@ -19,12 +20,14 @@ type Props = {
 const AUTH_TYPES: AuthConfig['type'][] = ['none', 'basic', 'apiKey', 'bearer'];
 
 export function ConnectionDialog({ isOpen, initial, onOpenChange, onSave, onTest }: Props) {
+  // State initializes once per mount — callers must remount per open (key={conn?.id ?? 'new'}).
+  const init = initialAuthFields(initial?.auth);
   const [name, setName] = useState(initial?.name ?? '');
   const [baseUrl, setBaseUrl] = useState(initial?.baseUrl ?? 'http://localhost:9200');
   const [authType, setAuthType] = useState<AuthConfig['type']>(initial?.auth.type ?? 'none');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [secret, setSecret] = useState('');
+  const [username, setUsername] = useState(init.username);
+  const [password, setPassword] = useState(init.password);
+  const [secret, setSecret] = useState(init.secret);
   const [testMsg, setTestMsg] = useState('');
   const [detected, setDetected] = useState<{ version?: string; major?: EsMajor } | undefined>(undefined);
 
