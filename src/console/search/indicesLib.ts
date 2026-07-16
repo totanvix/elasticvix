@@ -4,6 +4,21 @@ export interface IndexInfo {
   docsCount?: string;
 }
 
+/** Name of the index holding the most documents, used as the default selection. */
+export function largestIndex(indices: IndexInfo[]): string | undefined {
+  let best: string | undefined;
+  let bestCount = -1;
+  for (const i of indices) {
+    const parsed = i.docsCount ? Number(i.docsCount) : 0;
+    const count = Number.isFinite(parsed) ? parsed : 0;
+    if (count > bestCount) {
+      bestCount = count;
+      best = i.index;
+    }
+  }
+  return best;
+}
+
 export function parseCatIndices(body: unknown): IndexInfo[] {
   if (!Array.isArray(body)) return [];
   const out: IndexInfo[] = [];

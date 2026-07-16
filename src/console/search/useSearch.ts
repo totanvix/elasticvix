@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Connection } from '../../lib/types';
 import type { EsResult } from '../../lib/rpc/messages';
 import { esRequest } from '../../lib/rpc/client';
+import { addSearchHistory } from '../../lib/storage/searchHistory';
+import { newId } from '../ids';
 import { buildSearchPath, mergeFromSize, normalizeTotal, type TotalInfo } from './searchLib';
 
 export const DEFAULT_QUERY = '{\n  "query": {\n    "match_all": {}\n  }\n}';
@@ -48,6 +50,7 @@ export function useSearch(active: Connection | undefined) {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(DEFAULT_SIZE);
   const [inputError, setInputError] = useState<string | undefined>(undefined);
+  const [ranAt, setRanAt] = useState(0); // bump after each recorded run so the History popover can refresh
   const runSeq = useRef(0);
 
   const activeId = active?.id;
@@ -83,7 +86,7 @@ export function useSearch(active: Connection | undefined) {
   );
 
   const runAt = useCallback(
-    async (nextPage: number, nextSize: number) => {
+    async (nextPage: number, nextSize: number, opts?: { record?: boolean }) => {
       if (!active || selected.length === 0) return;
       const body = mergeFromSize(queryText, (nextPage - 1) * nextSize, nextSize);
       if (body === undefined) {
@@ -100,6 +103,19 @@ export function useSearch(active: Connection | undefined) {
         setTotal(result.status >= 200 && result.status < 300 ? normalizeTotal(result.body) : undefined);
         setPage(nextPage);
         setSize(nextSize);
+        // Record history only for an explicit Search run, not pagination/page-size changes.
+        if (opts?.record) {
+          await addSearchHistory({
+            id: newId(),
+            indices: selected,
+            body: queryText,
+            connectionId: active.id,
+            status: result.status,
+            took: result.took,
+            ranAt: Date.now(),
+          });
+          setRanAt((n) => n + 1);
+        }
       } finally {
         if (seq === runSeq.current) setRunning(false);
       }
@@ -107,9 +123,28 @@ export function useSearch(active: Connection | undefined) {
     [active, selected, queryText],
   );
 
-  const runSearch = useCallback(() => runAt(1, size), [runAt, size]);
+  const runSearch = useCallback(() => runAt(1, size, { record: true }), [runAt, size]);
   const goToPage = useCallback((p: number) => runAt(p, size), [runAt, size]);
   const changeSize = useCallback((s: number) => runAt(1, s), [runAt]);
+
+  const format = useCallback(() => {
+    try {
+      changeQuery(JSON.stringify(JSON.parse(queryText), null, 2));
+    } catch {
+      setInputError('Query is not valid JSON');
+    }
+  }, [changeQuery, queryText]);
+
+  const load = useCallback(
+    (entry: { indices: string[]; body: string }) => {
+      setSelected(entry.indices);
+      setQueryText(entry.body);
+      setPage(1);
+      setInputError(undefined);
+      if (activeId) persist(activeId, { selected: entry.indices, queryText: entry.body });
+    },
+    [activeId],
+  );
 
   return {
     selected,
@@ -125,5 +160,8 @@ export function useSearch(active: Connection | undefined) {
     runSearch,
     goToPage,
     changeSize,
+    format,
+    load,
+    ranAt,
   };
 }

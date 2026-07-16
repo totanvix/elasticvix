@@ -40,6 +40,27 @@ export interface HistoryEntry {
   ranAt: number;
 }
 
+export interface SearchSavedQuery {
+  id: string;
+  name: string;
+  tags: string[];
+  indices: string[];
+  body: string;
+  connectionId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SearchHistoryEntry {
+  id: string;
+  indices: string[];
+  body: string; // queryText as typed, before from/size are merged
+  connectionId: string;
+  status?: number;
+  took?: number;
+  ranAt: number;
+}
+
 export interface FlatField {
   path: string; // dotted, e.g. "user.address.city"
   type: string; // keyword/text/date/long/...

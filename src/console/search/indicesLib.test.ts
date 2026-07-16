@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseCatIndices } from './indicesLib';
+import { parseCatIndices, largestIndex } from './indicesLib';
 
 describe('parseCatIndices', () => {
   it('parses rows, drops system indices, and sorts by name', () => {
@@ -22,5 +22,25 @@ describe('parseCatIndices', () => {
   it('skips malformed rows and tolerates missing optional columns', () => {
     const body = [{ index: 'a' }, 'junk', { health: 'green' }, null];
     expect(parseCatIndices(body)).toEqual([{ index: 'a', health: undefined, docsCount: undefined }]);
+  });
+});
+
+describe('largestIndex', () => {
+  it('returns the index with the most docs', () => {
+    const indices = [
+      { index: 'small', docsCount: '3' },
+      { index: 'big', docsCount: '900' },
+      { index: 'mid', docsCount: '42' },
+    ];
+    expect(largestIndex(indices)).toBe('big');
+  });
+
+  it('treats missing/invalid docs.count as zero and falls back to the first index', () => {
+    expect(largestIndex([{ index: 'a' }, { index: 'b' }])).toBe('a');
+    expect(largestIndex([{ index: 'a', docsCount: 'x' }, { index: 'b', docsCount: '1' }])).toBe('b');
+  });
+
+  it('returns undefined for an empty list', () => {
+    expect(largestIndex([])).toBeUndefined();
   });
 });
