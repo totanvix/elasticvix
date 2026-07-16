@@ -7,8 +7,9 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: {
-    name: 'Elasticvix',
-    description: 'Elasticsearch query console with field-aware autocomplete and saved queries.',
+    name: 'Elasticvix - Elasticsearch Client',
+    description:
+      'Elasticsearch client with query console, field-aware autocomplete, saved queries, and multi-cluster support. For ES 6.x-9.x.',
     permissions: ['storage'],
     host_permissions: ['http://*/*', 'https://*/*'],
     action: {},
