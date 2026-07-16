@@ -23,6 +23,8 @@
     "@wxt-dev/module-react": "^1.2.2",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.1.1",
+    "puppeteer-core": "^25.3.0",
+    "sharp": "^0.35.3",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10",
     "wxt": "^0.20.27"
