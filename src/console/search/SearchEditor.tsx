@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { autocompletion } from '@codemirror/autocomplete';
+import { Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import type { FlatField } from '../../lib/types';
 import { bodyCompletionSource } from '../../lib/autocomplete/engine';
@@ -21,15 +22,18 @@ export function SearchEditor({ value, onChange, onRun, getFields }: Props) {
     () => [
       json(),
       autocompletion({ override: [bodyCompletionSource(getFields)] }),
-      keymap.of([
-        {
-          key: 'Mod-Enter',
-          run: () => {
-            onRun();
-            return true;
+      // Highest precedence so basicSetup's default Mod-Enter (insertBlankLine) doesn't win.
+      Prec.highest(
+        keymap.of([
+          {
+            key: 'Mod-Enter',
+            run: () => {
+              onRun();
+              return true;
+            },
           },
-        },
-      ]),
+        ]),
+      ),
     ],
     [getFields, onRun],
   );
@@ -41,6 +45,7 @@ export function SearchEditor({ value, onChange, onRun, getFields }: Props) {
       extensions={extensions}
       theme={theme === 'dark' ? 'dark' : 'light'}
       height="100%"
+      className="h-full"
     />
   );
 }

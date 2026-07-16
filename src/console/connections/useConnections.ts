@@ -30,17 +30,6 @@ export function useConnections() {
     setActiveId(id);
   }, []);
 
-  // Ensure the extension may reach the connection's origin (optional host perm).
-  const ensureHostPermission = useCallback(async (baseUrl: string): Promise<boolean> => {
-    try {
-      const origin = new URL(baseUrl).origin + '/*';
-      if (await browser.permissions.contains({ origins: [origin] })) return true;
-      return await browser.permissions.request({ origins: [origin] });
-    } catch {
-      return false;
-    }
-  }, []);
-
   const addOrUpdate = useCallback(
     async (conn: Connection) => {
       const isNew = !connections.some((c) => c.id === conn.id);
@@ -63,15 +52,11 @@ export function useConnections() {
     [activeId, reload],
   );
 
-  const test = useCallback(
-    async (conn: Connection): Promise<TestResult> => {
-      if (!(await ensureHostPermission(conn.baseUrl))) return { ok: false, error: 'Host permission denied' };
-      const res = await detectVersion(conn);
-      if (res.error) return { ok: false, error: res.error };
-      return { ok: true, version: res.version, major: res.major };
-    },
-    [ensureHostPermission],
-  );
+  const test = useCallback(async (conn: Connection): Promise<TestResult> => {
+    const res = await detectVersion(conn);
+    if (res.error) return { ok: false, error: res.error };
+    return { ok: true, version: res.version, major: res.major };
+  }, []);
 
   const active = connections.find((c) => c.id === activeId);
   return { connections, active, activeId, setActive, addOrUpdate, remove, test };

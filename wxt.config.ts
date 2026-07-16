@@ -10,7 +10,7 @@ export default defineConfig({
     name: 'Elasticvix',
     description: 'Elasticsearch query console with field-aware autocomplete and saved queries.',
     permissions: ['storage'],
-    optional_host_permissions: ['http://*/*', 'https://*/*'],
+    host_permissions: ['http://*/*', 'https://*/*'],
     action: {},
   },
 });

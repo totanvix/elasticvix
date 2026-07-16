@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { addSearchHistory, listSearchHistory } from './searchHistory';
+import { addSearchHistory, listSearchHistory, deleteSearchHistory, clearSearchHistory } from './searchHistory';
 import { HISTORY_CAP } from './history';
 import type { SearchHistoryEntry } from '../types';
 
@@ -24,5 +24,17 @@ describe('search history repo', () => {
     expect(all).toHaveLength(HISTORY_CAP);
     expect(all[0]!.id).toBe(String(HISTORY_CAP + 4)); // newest kept
     expect(all.some((h) => h.id === '0')).toBe(false); // oldest pruned
+  });
+  it('deletes a single entry', async () => {
+    await addSearchHistory(entry('a', 10));
+    await addSearchHistory(entry('b', 20));
+    await deleteSearchHistory('a');
+    expect((await listSearchHistory()).map((h) => h.id)).toEqual(['b']);
+  });
+  it('clears all entries', async () => {
+    await addSearchHistory(entry('a', 10));
+    await addSearchHistory(entry('b', 20));
+    await clearSearchHistory();
+    expect(await listSearchHistory()).toHaveLength(0);
   });
 });

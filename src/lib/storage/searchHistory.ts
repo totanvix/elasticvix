@@ -18,3 +18,11 @@ export async function listSearchHistory(): Promise<SearchHistoryEntry[]> {
   const all = await (await getDb()).getAllFromIndex('searchHistory', 'by-ranAt');
   return all.reverse(); // newest first
 }
+
+export async function deleteSearchHistory(id: string): Promise<void> {
+  await (await getDb()).delete('searchHistory', id);
+}
+
+export async function clearSearchHistory(): Promise<void> {
+  await (await getDb()).clear('searchHistory');
+}

@@ -14,6 +14,7 @@ import { useIndices } from './useIndices';
 import { DEFAULT_QUERY, useSearch } from './useSearch';
 import { IndicesSelect } from './IndicesSelect';
 import { SearchEditor } from './SearchEditor';
+import { EditorResizeHandle, MIN_EDITOR_HEIGHT } from './EditorResizeHandle';
 import { HitsTable } from './HitsTable';
 import { DocDialog } from './DocDialog';
 import { SaveSearchDialog } from './SaveSearchDialog';
@@ -27,6 +28,14 @@ type Props = {
   onTestConnection: (conn: Connection) => Promise<TestResult>;
 };
 
+const EDITOR_HEIGHT_KEY = 'elasticvix.search.editorHeight';
+const DEFAULT_EDITOR_HEIGHT = 192;
+
+function loadEditorHeight(): number {
+  const n = Number(localStorage.getItem(EDITOR_HEIGHT_KEY));
+  return Number.isFinite(n) && n >= MIN_EDITOR_HEIGHT ? n : DEFAULT_EDITOR_HEIGHT;
+}
+
 export function SearchPage({ active, onSaveConnection, onTestConnection }: Props) {
   const indicesState = useIndices(active);
   const search = useSearch(active);
@@ -34,6 +43,12 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
   const [isAddOpen, setAddOpen] = useState(false);
   const [isSaveOpen, setSaveOpen] = useState(false);
   const [savedReloadKey, setSavedReloadKey] = useState(0);
+  const [editorHeight, setEditorHeight] = useState(loadEditorHeight);
+
+  const changeEditorHeight = useCallback((h: number) => {
+    setEditorHeight(h);
+    localStorage.setItem(EDITOR_HEIGHT_KEY, String(h));
+  }, []);
 
   const getFields = useCallback(async (): Promise<FlatField[]> => {
     if (!active || search.selected.length === 0) return [];
@@ -122,13 +137,16 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
         </div>
       </div>
 
-      <div className="h-48 min-h-32 shrink-0 resize-y overflow-hidden rounded-md border">
-        <SearchEditor
-          value={search.queryText}
-          onChange={search.changeQuery}
-          onRun={() => void search.runSearch()}
-          getFields={getFields}
-        />
+      <div className="shrink-0">
+        <div style={{ height: editorHeight }} className="overflow-hidden rounded-t-md border">
+          <SearchEditor
+            value={search.queryText}
+            onChange={search.changeQuery}
+            onRun={() => void search.runSearch()}
+            getFields={getFields}
+          />
+        </div>
+        <EditorResizeHandle height={editorHeight} onHeightChange={changeEditorHeight} />
       </div>
 
       {(search.inputError ?? errorHeadline) && (

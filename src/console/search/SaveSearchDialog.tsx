@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -47,6 +47,7 @@ export function SaveSearchDialog({ isOpen, indices, body, connectionId, onOpenCh
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Save search</DialogTitle>
+          <DialogDescription>Save the current indices and query for quick reuse.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div className="grid gap-1.5">
@@ -57,7 +58,10 @@ export function SaveSearchDialog({ isOpen, indices, body, connectionId, onOpenCh
             <Label htmlFor="s-tags">Tags (comma-separated)</Label>
             <Input id="s-tags" value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="prod, slow" />
           </div>
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSave}>Save</Button>
           </div>
         </div>
