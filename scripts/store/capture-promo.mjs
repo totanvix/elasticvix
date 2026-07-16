@@ -38,16 +38,19 @@ const SIZES = [
   { name: 'marquee-1400x560.png', w: 1400, h: 560 },
 ];
 
-const browser = await puppeteer.launch({ executablePath: CHROME, headless: true });
-const page = await browser.newPage();
+let browser;
+try {
+  browser = await puppeteer.launch({ executablePath: CHROME, headless: true });
+  const page = await browser.newPage();
 
-for (const { name, w, h } of SIZES) {
-  await page.setViewport({ width: w, height: h });
-  await page.goto(`file://${resolve('scripts/store/promo.html')}`);
-  await new Promise((r) => setTimeout(r, 300));
-  const buf = await page.screenshot({ type: 'png' });
-  await sharp(buf).flatten({ background: '#0F172A' }).removeAlpha().png().toFile(`${OUT}/${name}`);
-  console.log(`saved ${OUT}/${name}`);
+  for (const { name, w, h } of SIZES) {
+    await page.setViewport({ width: w, height: h });
+    await page.goto(`file://${resolve('scripts/store/promo.html')}`);
+    await new Promise((r) => setTimeout(r, 300));
+    const buf = await page.screenshot({ type: 'png' });
+    await sharp(buf).flatten({ background: '#0F172A' }).removeAlpha().png().toFile(`${OUT}/${name}`);
+    console.log(`saved ${OUT}/${name}`);
+  }
+} finally {
+  if (browser) await browser.close();
 }
-
-await browser.close();
