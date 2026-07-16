@@ -1,4 +1,8 @@
-const ES = process.env.ES_URL ?? 'http://localhost:9200';
+const ES = process.env.ES_URL;
+if (!ES) {
+  console.error('ES_URL is required, e.g. ES_URL=http://localhost:9201 node scripts/store/seed-es.mjs');
+  process.exit(1);
+}
 
 // LCG có seed cố định để dữ liệu tái lập được giữa các lần chạy
 let seed = 42;

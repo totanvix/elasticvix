@@ -31,7 +31,7 @@ The extension requests access to all URLs solely because an Elasticsearch cluste
 
 ## Data removal
 
-You can delete individual connections, saved queries, or history entries inside the extension. Uninstalling the extension removes all locally stored data.
+You can delete connections and saved queries inside the extension. Query history is automatically capped, and uninstalling the extension removes all locally stored data.
 
 ## Changes to this policy
 

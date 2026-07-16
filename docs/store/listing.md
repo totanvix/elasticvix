@@ -31,7 +31,7 @@ QUERY CONSOLE
 SEARCH UI
 • Pick indices and search without hand-writing full requests
 • Results in a hits table with a document detail view
-• Aggregations view
+• Run aggregations and inspect results in the raw response view
 • Download results as JSON
 
 SAVED QUERIES & HISTORY
