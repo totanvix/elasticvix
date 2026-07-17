@@ -33,4 +33,4 @@ Tick đủ 3 certification:
 
 ## Privacy policy URL
 
-URL của Notion public page (tạo ở bước checklist — dán nội dung docs/store/privacy-policy.md).
+https://totanvix.github.io/elasticvix-web/privacy-policy/

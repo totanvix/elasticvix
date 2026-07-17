@@ -4,8 +4,9 @@
 
 - [ ] 1. Tạo Chrome Web Store developer account tại https://chrome.google.com/webstore/devconsole
       với Google account gắn email totanvix@gmail.com. Trả phí đăng ký $5 (một lần). Xác minh email.
-- [ ] 2. Tạo Notion page mới → dán nguyên văn nội dung `docs/store/privacy-policy.md` →
-      Share → "Publish to web" → copy public URL. Kiểm tra URL mở được ở cửa sổ ẩn danh.
+- [x] 2. Privacy policy đã publish tại https://totanvix.github.io/elasticvix-web/privacy-policy/
+      (repo public totanvix/elasticvix-web, GitHub Pages; nguồn nội dung: `docs/store/privacy-policy.md` —
+      sửa nội dung thì cập nhật cả hai nơi).
 
 ## B. Kiểm tra trước khi upload (chạy máy)
 
@@ -20,12 +21,13 @@
 
 - [ ] 7. New item → upload `.output/elasticvix-1.0.0-chrome.zip`.
 - [ ] 8. Tab **Store listing**: điền theo `docs/store/listing.md`
-      (category Developer Tools, description, support email; homepage bỏ trống).
+      (category Developer Tools, description, support email; homepage: https://totanvix.github.io/elasticvix-web/).
 - [ ] 9. Upload ảnh:
       - 5 screenshots trong `docs/store/screenshots/` (đúng thứ tự 01→05)
       - Small promo tile: `docs/store/promo/small-440x280.png`
       - Marquee promo tile: `docs/store/promo/marquee-1400x560.png`
-- [ ] 10. Tab **Privacy**: điền theo `docs/store/privacy-form.md`, dán URL Notion vào Privacy policy.
+- [ ] 10. Tab **Privacy**: điền theo `docs/store/privacy-form.md`, dán
+      https://totanvix.github.io/elasticvix-web/privacy-policy/ vào Privacy policy.
 - [ ] 11. Tab **Distribution**: Public · All regions · Free.
 - [ ] 12. Submit for review.
 
