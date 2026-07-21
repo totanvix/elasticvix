@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — Elasticvix</title>
+  <meta name="description" content="Elasticvix privacy policy. All data stays on your machine.">
+  <link rel="icon" type="image/svg+xml" href="../assets/icon.svg">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --fg: #0f172a;
+      --muted: #475569;
+      --accent: #0d9488;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --fg: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #2dd4bf;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.7;
+    }
+    a { color: var(--accent); }
+    main { max-width: 720px; margin: 0 auto; padding: 48px 24px 72px; }
+    .back { font-size: 14px; }
+    h1 { font-size: 32px; letter-spacing: -0.02em; margin: 16px 0 4px; }
+    .effective { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+    h2 { font-size: 20px; margin: 28px 0 8px; }
+    p, li { color: var(--muted); margin-bottom: 10px; }
+    ul { padding-left: 24px; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="../">&larr; Elasticvix</a>
+    <h1>Elasticvix Privacy Policy</h1>
+    <p class="effective">Effective date: July 16, 2026</p>
+
+    <p>Elasticvix ("the extension") is a Chrome extension that provides a client interface for Elasticsearch clusters.</p>
+
+    <h2>Summary</h2>
+    <p>Elasticvix does not collect, transmit, sell, or share any personal data. Everything you enter stays in your browser.</p>
+
+    <h2>Data stored locally</h2>
+    <p>The extension stores the following data locally in your browser (using Chrome extension storage and IndexedDB):</p>
+    <ul>
+      <li>Connection profiles you create: cluster name, base URL, and credentials (username/password, API key, or bearer token) if you configure authentication</li>
+      <li>Saved queries, including their names and tags</li>
+      <li>Query history</li>
+      <li>UI preferences such as light/dark theme</li>
+    </ul>
+    <p>This data never leaves your device except as described below.</p>
+
+    <h2>Where your data goes</h2>
+    <p>The only network requests the extension makes are to the Elasticsearch cluster URLs you configure yourself. Credentials are sent only to their corresponding cluster as part of those requests.</p>
+    <p>The extension contains no analytics, no tracking, no advertising, and no third-party services. The developer operates no server and receives no data from the extension.</p>
+
+    <h2>Permissions</h2>
+    <p>The extension requests access to all URLs solely because an Elasticsearch cluster may be hosted on any address (localhost, private networks, or cloud providers). The extension has no content scripts and never reads or modifies the websites you visit.</p>
+
+    <h2>Data removal</h2>
+    <p>You can delete connections and saved queries inside the extension. Query history is automatically capped, and uninstalling the extension removes all locally stored data.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If this policy changes, the updated version will be published at this page with a new effective date.</p>
+
+    <h2>Contact</h2>
+    <p><a href="mailto:totanvix@gmail.com">totanvix@gmail.com</a></p>
+  </main>
+</body>
+</html>
