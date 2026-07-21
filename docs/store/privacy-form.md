@@ -33,4 +33,4 @@ Tick đủ 3 certification:
 
 ## Privacy policy URL
 
-https://totanvix.github.io/elasticvix-web/privacy-policy/
+https://totanvix.github.io/elasticvix/privacy-policy/

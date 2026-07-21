@@ -58,4 +58,4 @@ totanvix@gmail.com
 
 ## Homepage
 
-https://totanvix.github.io/elasticvix-web/
+https://totanvix.github.io/elasticvix/
