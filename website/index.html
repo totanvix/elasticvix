@@ -99,6 +99,11 @@
     .privacy p { color: var(--muted); margin-bottom: 12px; }
     @media (max-width: 760px) { .privacy { grid-template-columns: 1fr; padding: 24px; } }
 
+    /* Open source */
+    .opensource { text-align: center; padding: 16px 0 48px; }
+    .opensource h2 { font-size: 26px; margin-bottom: 12px; }
+    .opensource p { color: var(--muted); max-width: 640px; margin: 0 auto 20px; }
+
     /* Footer */
     footer {
       border-top: 1px solid var(--border);
@@ -125,7 +130,7 @@
       <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad">Add to Chrome</a>
       <a class="btn btn-secondary" href="https://github.com/totanvix/elasticvix">View on GitHub</a>
     </div>
-    <p class="works-with">Works with Elasticsearch 6.x, 7.x, 8.x (tested) and 9.x (best effort)</p>
+    <p class="works-with">Free &amp; open source · Works with Elasticsearch 6.x, 7.x, 8.x (tested) and 9.x (best effort)</p>
   </section>
 
   <main class="wrap">
@@ -195,6 +200,12 @@
         <img class="shot" src="./assets/05-dark-mode.png" alt="Elasticvix in dark mode" width="1280" height="800" loading="lazy">
       </div>
     </section>
+
+    <section class="opensource">
+      <h2>Free &amp; open source</h2>
+      <p>Elasticvix is open source under the MIT License. There is no server behind the extension — we never store any of your data. Browse the code, open an issue, or send a pull request. Contributions are welcome.</p>
+      <p><a class="btn btn-secondary" href="https://github.com/totanvix/elasticvix">Contribute on GitHub</a></p>
+    </section>
   </main>
 
   <footer>
@@ -204,7 +215,7 @@
       <a href="./privacy-policy/">Privacy Policy</a>
       <a href="mailto:totanvix@gmail.com">totanvix@gmail.com</a>
     </nav>
-    <p>Elasticvix — Elasticsearch client for Chrome</p>
+    <p>Elasticvix — Elasticsearch client for Chrome · MIT License</p>
   </footer>
 </body>
 </html>

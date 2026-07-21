@@ -49,6 +49,9 @@ WORKS WITH
 PRIVACY
 All data stays on your machine. Connections, credentials, saved queries, and history are stored locally in your browser and sent only to the Elasticsearch clusters you configure. No analytics, no tracking, nothing ever sent to us.
 
+OPEN SOURCE
+Elasticvix is free and open source under the MIT License. There is no server behind the extension and we never store any of your data. Browse the source, report issues, and contribute — pull requests are welcome: https://github.com/totanvix/elasticvix
+
 WHY "ACCESS TO ALL SITES"?
 An Elasticsearch cluster can live on any URL — localhost, a private IP, or any cloud host — so the extension requests broad host access to reach the cluster URLs you add. It has no content scripts: it never reads or changes the websites you visit. Requests go only to clusters you configure yourself.
 

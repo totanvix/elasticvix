@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "totanvix <totanvix@gmail.com>",
-  "license": "ISC",
+  "license": "MIT",
   "packageManager": "pnpm@10.12.4",
   "devDependencies": {
     "@types/chrome": "^0.2.2",
