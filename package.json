@@ -1,11 +1,12 @@
 {
   "name": "elasticvix",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Elasticsearch client Chrome extension: query console, field-aware autocomplete, saved queries, multi-cluster.",
   "main": "index.js",
   "scripts": {
     "dev": "wxt",
     "build": "wxt build",
+    "zip": "wxt zip",
     "test": "vitest run",
     "test:watch": "vitest",
     "compile": "tsc --noEmit",
