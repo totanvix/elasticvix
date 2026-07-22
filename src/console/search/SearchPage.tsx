@@ -173,6 +173,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
             <HitsTable
               hits={hits}
               hasMultipleIndices={search.selected.length > 1}
+              connectionId={active.id}
               total={search.total}
               page={search.page}
               size={search.size}
