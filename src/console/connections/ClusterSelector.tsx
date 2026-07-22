@@ -5,8 +5,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import type { Connection } from '../../lib/types';
 import { ConnectionDialog } from './ConnectionDialog';
 import type { TestResult } from './useConnections';
-import { useClusterHealth } from './useClusterHealth';
-import { healthDotClass } from './health';
 
 type DialogState = { mode: 'add' } | { mode: 'edit'; conn: Connection };
 
@@ -23,8 +21,6 @@ export function ClusterSelector({ connections, active, onSelect, onSave, onDelet
   const [isOpen, setOpen] = useState(false);
   const [dialogState, setDialogState] = useState<DialogState | undefined>(undefined);
   const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined);
-  const { status, reason } = useClusterHealth(active);
-  const dotTitle = reason ? `Cluster health unknown — ${reason}` : `Cluster health: ${status}`;
 
   const openDialog = (state: DialogState) => {
     setOpen(false);
@@ -41,8 +37,7 @@ export function ClusterSelector({ connections, active, onSelect, onSave, onDelet
     <>
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2" title={dotTitle}>
-            <span className={`inline-block h-2 w-2 rounded-full ${healthDotClass(status)}`} />
+          <Button variant="outline" size="sm" className="gap-2">
             <span className="max-w-40 truncate">{active ? active.name : 'No connection'}</span>
             {active?.version && <span className="text-muted-foreground">· {active.version}</span>}
             <ChevronDown className="h-3.5 w-3.5 opacity-60" />

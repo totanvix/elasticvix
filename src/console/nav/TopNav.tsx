@@ -3,6 +3,8 @@ import { Button } from '../ui/button';
 import { useTheme } from '../theme';
 import type { Connection } from '../../lib/types';
 import { ClusterSelector } from '../connections/ClusterSelector';
+import { ConnectionStatusChip } from '../connections/ConnectionStatusChip';
+import { useConnectionStatus } from '../connections/useConnectionStatus';
 import type { TestResult } from '../connections/useConnections';
 
 export type ConsoleView = 'search' | 'rest';
@@ -33,6 +35,7 @@ function ThemeToggle() {
 }
 
 export function TopNav({ view, onViewChange, connections, active, onSelect, onSave, onDelete, onTest }: Props) {
+  const status = useConnectionStatus(active);
   return (
     <>
       <span className="text-lg font-semibold">Elasticvix</span>
@@ -46,6 +49,11 @@ export function TopNav({ view, onViewChange, connections, active, onSelect, onSa
           onTest={onTest}
         />
       </div>
+      {active && (
+        <div className="ml-3">
+          <ConnectionStatusChip status={status} />
+        </div>
+      )}
       <nav className="ml-auto flex items-center gap-1">
         {NAV_ITEMS.map((item) => (
           <button
