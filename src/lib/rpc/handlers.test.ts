@@ -43,6 +43,25 @@ describe('handleRpc', () => {
     }
   });
 
+  it('esRequest aborts a hung request after the timeout with a clear error', async () => {
+    // Simulates real fetch behavior against a black-holed host: never settles
+    // on its own, rejects only when the abort signal fires.
+    const fetchFn = vi.fn(
+      (_url: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+        }),
+    ) as unknown as typeof fetch;
+    const res = await handleRpc(
+      { kind: 'esRequest', connection: conn, method: 'GET', path: '/x/_search' },
+      { fetchFn, timeoutMs: 50 },
+    );
+    if (res.kind === 'esRequest') {
+      expect(res.result.status).toBe(0);
+      expect(res.result.error).toMatch(/timed out/i);
+    }
+  });
+
   it('esRequest reports a transport error instead of throwing', async () => {
     const fetchFn = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     const res = await handleRpc({ kind: 'esRequest', connection: conn, method: 'GET', path: '/' }, { fetchFn });

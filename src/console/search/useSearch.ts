@@ -116,6 +116,13 @@ export function useSearch(active: Connection | undefined) {
           });
           setRanAt((n) => n + 1);
         }
+      } catch (e) {
+        // Transport-level failure (e.g. the background service worker restarted
+        // and the message channel closed) — surface it instead of failing silently.
+        if (seq === runSeq.current) {
+          setResponse({ status: 0, took: 0, body: null, error: e instanceof Error ? e.message : String(e) });
+          setTotal(undefined);
+        }
       } finally {
         if (seq === runSeq.current) setRunning(false);
       }
