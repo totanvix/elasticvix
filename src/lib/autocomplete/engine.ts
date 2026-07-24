@@ -75,6 +75,26 @@ export function resolveCompletions(
   return [];
 }
 
+// At a value position, returns the enclosing key when it is a real keyword
+// field of the target index — the signal to suggest that field's actual
+// values. Skips trailing array-index segments (e.g. terms: { field: [ "|" ] }).
+export function resolveValueField(
+  path: string[],
+  inKey: boolean,
+  fields: FlatField[],
+): string | undefined {
+  if (inKey) return undefined;
+  for (let i = path.length - 1; i >= 0; i--) {
+    const segment = path[i]!;
+    if (!/^\d+$/.test(segment)) {
+      // This is not an array index; it's the field name
+      const field = fields.find((f) => f.path === segment);
+      return field?.type === 'keyword' ? field.path : undefined;
+    }
+  }
+  return undefined;
+}
+
 // Compute completions for a whole editor document: line 1 is `METHOD /path`,
 // the remaining lines are the JSON body. Only the body sub-range is parsed as
 // JSON — line 1 is not JSON and would corrupt the syntax tree.
