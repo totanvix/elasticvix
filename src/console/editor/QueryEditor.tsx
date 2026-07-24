@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import type { Connection } from '../../lib/types';
 import { useTheme } from '../theme';
 import { makeGetFields } from './getFields';
+import { makeGetFieldValues } from './getFieldValues';
 import { buildEditorExtensions } from './editorExtensions';
 
 type Props = {
@@ -22,8 +23,9 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
 
   const extensions = useMemo(() => {
     const getFields = makeGetFields(active);
+    const getFieldValues = makeGetFieldValues(active);
     return [
-      ...buildEditorExtensions(getFields),
+      ...buildEditorExtensions(getFields, getFieldValues),
       keymap.of([
         {
           key: 'Mod-Enter',
