@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { spec } from './spec';
-import { resolveCompletions, docCompletions, bodyCompletions } from './engine';
+import {
+  resolveCompletions, docCompletions, bodyCompletions, resolveValueField,
+  bodyValueField, docValueField,
+} from './engine';
 import type { FlatField } from '../types';
 
 const fields: FlatField[] = [
@@ -75,5 +78,58 @@ describe('bodyCompletions (body-only Search page document)', () => {
     const doc = '{ "query": { "match": { "" } } }';
     const pos = doc.indexOf('""') + 1;
     expect(bodyCompletions(doc, pos, oneField)).toEqual([{ label: 'title', kind: 'field', detail: 'text' }]);
+  });
+});
+
+describe('resolveValueField', () => {
+  const f: FlatField[] = [
+    { path: 'status', type: 'keyword' },
+    { path: 'title', type: 'text' },
+    { path: 'title.keyword', type: 'keyword' },
+  ];
+  it('returns the field for a term value position', () => {
+    expect(resolveValueField(['query', 'term', 'status'], false, f)).toBe('status');
+  });
+  it('returns the field for a terms array element', () => {
+    expect(resolveValueField(['query', 'terms', 'status', '0'], false, f)).toBe('status');
+  });
+  it('returns a dotted keyword sub-field', () => {
+    expect(resolveValueField(['query', 'term', 'title.keyword'], false, f)).toBe('title.keyword');
+  });
+  it('returns undefined in a key position', () => {
+    expect(resolveValueField(['query', 'term'], true, f)).toBeUndefined();
+  });
+  it('returns undefined for a range sub-key (gte)', () => {
+    expect(resolveValueField(['query', 'range', 'price', 'gte'], false, f)).toBeUndefined();
+  });
+  it('returns undefined for a text field', () => {
+    expect(resolveValueField(['query', 'match', 'title'], false, f)).toBeUndefined();
+  });
+  it('returns undefined for a non-field key (size)', () => {
+    expect(resolveValueField(['size'], false, f)).toBeUndefined();
+  });
+});
+
+describe('bodyValueField / docValueField', () => {
+  const f: FlatField[] = [{ path: 'status', type: 'keyword' }];
+
+  it('bodyValueField finds the field at a term value (Search body)', () => {
+    const doc = '{ "query": { "term": { "status": "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    expect(bodyValueField(doc, pos, f)).toBe('status');
+  });
+  it('bodyValueField returns undefined in a key position', () => {
+    const doc = '{ "query": { "term": { "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    expect(bodyValueField(doc, pos, f)).toBeUndefined();
+  });
+  it('docValueField finds the field at a term value (REST doc)', () => {
+    const doc = 'POST /logs/_search\n{ "query": { "term": { "status": "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    expect(docValueField(doc, pos, f)).toBe('status');
+  });
+  it('docValueField returns undefined on the request line', () => {
+    const doc = 'GET /logs/_search\n{ }';
+    expect(docValueField(doc, 3, f)).toBeUndefined();
   });
 });

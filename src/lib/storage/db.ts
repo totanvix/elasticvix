@@ -7,10 +7,17 @@ export interface CachedMapping {
   fetchedAt: number;
 }
 
+export interface CachedFieldValues {
+  key: string; // `${connectionId}::${index}::${field}`
+  values: string[];
+  fetchedAt: number;
+}
+
 export interface VixSchema extends DBSchema {
   savedQueries: { key: string; value: SavedQuery };
   history: { key: string; value: HistoryEntry; indexes: { 'by-ranAt': number } };
   mappingCache: { key: string; value: CachedMapping };
+  fieldValuesCache: { key: string; value: CachedFieldValues };
   searchSavedQueries: { key: string; value: SearchSavedQuery };
   searchHistory: { key: string; value: SearchHistoryEntry; indexes: { 'by-ranAt': number } };
 }
@@ -22,7 +29,7 @@ export function getDb(): Promise<IDBPDatabase<VixSchema>> {
     // Guard every createObjectStore with contains(): a fresh install runs upgrade
     // from version 0 and must create all stores, while an existing v1 database only
     // needs the v2 additions.
-    dbPromise = openDB<VixSchema>('elasticvix', 2, {
+    dbPromise = openDB<VixSchema>('elasticvix', 3, {
       upgrade(db) {
         if (!db.objectStoreNames.contains('savedQueries')) {
           db.createObjectStore('savedQueries', { keyPath: 'id' });
@@ -33,6 +40,9 @@ export function getDb(): Promise<IDBPDatabase<VixSchema>> {
         }
         if (!db.objectStoreNames.contains('mappingCache')) {
           db.createObjectStore('mappingCache', { keyPath: 'key' });
+        }
+        if (!db.objectStoreNames.contains('fieldValuesCache')) {
+          db.createObjectStore('fieldValuesCache', { keyPath: 'key' });
         }
         if (!db.objectStoreNames.contains('searchSavedQueries')) {
           db.createObjectStore('searchSavedQueries', { keyPath: 'id' });

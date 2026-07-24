@@ -13,15 +13,16 @@ type Props = {
   onChange: (value: string) => void;
   onRun: () => void;
   getFields: () => Promise<FlatField[]>;
+  getFieldValues: (field: string) => Promise<string[]>;
 };
 
-export function SearchEditor({ value, onChange, onRun, getFields }: Props) {
+export function SearchEditor({ value, onChange, onRun, getFields, getFieldValues }: Props) {
   const { theme } = useTheme();
 
   const extensions = useMemo(
     () => [
       json(),
-      autocompletion({ override: [bodyCompletionSource(getFields)] }),
+      autocompletion({ override: [bodyCompletionSource(getFields, getFieldValues)] }),
       // Highest precedence so basicSetup's default Mod-Enter (insertBlankLine) doesn't win.
       Prec.highest(
         keymap.of([
@@ -35,7 +36,7 @@ export function SearchEditor({ value, onChange, onRun, getFields }: Props) {
         ]),
       ),
     ],
-    [getFields, onRun],
+    [getFields, getFieldValues, onRun],
   );
 
   return (

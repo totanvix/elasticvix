@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import type { Connection, FlatField } from '../../lib/types';
 import { makeGetFields } from '../editor/getFields';
+import { makeGetFieldValues } from '../editor/getFieldValues';
 import { ResponseView } from '../editor/ResponseView';
 import { ConnectionDialog } from '../connections/ConnectionDialog';
 import type { TestResult } from '../connections/useConnections';
@@ -55,6 +56,11 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
     const perIndex = makeGetFields(active);
     const lists = await Promise.all(search.selected.map((index) => perIndex(index)));
     return unionFields(lists);
+  }, [active, search.selected]);
+
+  const getFieldValues = useCallback(async (field: string): Promise<string[]> => {
+    if (!active || search.selected.length === 0) return [];
+    return makeGetFieldValues(active)(search.selected.join(','), field);
   }, [active, search.selected]);
 
   // Pre-select the largest index when the user hasn't chosen any, so Search works right away.
@@ -144,6 +150,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
             onChange={search.changeQuery}
             onRun={() => void search.runSearch()}
             getFields={getFields}
+            getFieldValues={getFieldValues}
           />
         </div>
         <EditorResizeHandle height={editorHeight} onHeightChange={changeEditorHeight} />
