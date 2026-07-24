@@ -127,17 +127,48 @@ export function bodyCompletions(docText: string, pos: number, fields: FlatField[
   return resolveCompletions(defaultSpec, rootRef, path, inKey, fields);
 }
 
+// Value-field detection for the Search page (body-only document).
+export function bodyValueField(docText: string, pos: number, fields: FlatField[]): string | undefined {
+  const state = EditorState.create({ doc: docText, extensions: [json()] });
+  const { path, inKey } = resolveKeyPath(state, pos);
+  return resolveValueField(path, inKey, fields);
+}
+
+// Value-field detection for the REST console (request line + body document).
+export function docValueField(docText: string, pos: number, fields: FlatField[]): string | undefined {
+  const nl = docText.indexOf('\n');
+  if (nl === -1 || pos <= nl) return undefined; // on the request line / no body
+  const bodyStart = nl + 1;
+  const state = EditorState.create({ doc: docText.slice(bodyStart), extensions: [json()] });
+  const { path, inKey } = resolveKeyPath(state, pos - bodyStart);
+  return resolveValueField(path, inKey, fields);
+}
+
 // CodeMirror source for the Search page editor. `getFields` is already scoped
 // to the selected indices by the caller, so it takes no index argument.
-export function bodyCompletionSource(getFields: () => Promise<FlatField[]>) {
+export function bodyCompletionSource(
+  getFields: () => Promise<FlatField[]>,
+  getFieldValues: (field: string) => Promise<string[]> = async () => [],
+) {
   return async (ctx: CompletionContext): Promise<CompletionResult | null> => {
     const fields = await getFields();
-    const items = bodyCompletions(ctx.state.doc.toString(), ctx.pos, fields);
-    if (items.length === 0) return null;
-
+    const docText = ctx.state.doc.toString();
+    const items = bodyCompletions(docText, ctx.pos, fields);
     const word = ctx.matchBefore(/[\w.]*/);
+    const from = word ? word.from : ctx.pos;
+
+    if (items.length === 0) {
+      const field = bodyValueField(docText, ctx.pos, fields);
+      if (field) {
+        const values = await getFieldValues(field);
+        if (values.length > 0) {
+          return { from, options: values.map((v) => ({ label: v, type: 'enum' })) };
+        }
+      }
+      return null;
+    }
     return {
-      from: word ? word.from : ctx.pos,
+      from,
       options: items.map((it) => ({ label: it.label, type: KIND_TO_CM[it.kind], detail: it.detail })),
     };
   };
@@ -145,7 +176,10 @@ export function bodyCompletionSource(getFields: () => Promise<FlatField[]>) {
 
 // CodeMirror completion source used by the UI (Plan 2). `getFields` resolves the
 // target index's fields (from cache or a fresh _mapping fetch).
-export function esCompletionSource(getFields: (index?: string) => Promise<FlatField[]>) {
+export function esCompletionSource(
+  getFields: (index?: string) => Promise<FlatField[]>,
+  getFieldValues: (index: string | undefined, field: string) => Promise<string[]> = async () => [],
+) {
   return async (ctx: CompletionContext): Promise<CompletionResult | null> => {
     const docText = ctx.state.doc.toString();
     const nl = docText.indexOf('\n');
@@ -154,11 +188,21 @@ export function esCompletionSource(getFields: (index?: string) => Promise<FlatFi
     const { index } = parseRequestLine(docText.slice(0, nl));
     const fields = await getFields(index);
     const items = docCompletions(docText, ctx.pos, fields);
-    if (items.length === 0) return null;
-
     const word = ctx.matchBefore(/[\w.]*/);
+    const from = word ? word.from : ctx.pos;
+
+    if (items.length === 0) {
+      const field = docValueField(docText, ctx.pos, fields);
+      if (field) {
+        const values = await getFieldValues(index, field);
+        if (values.length > 0) {
+          return { from, options: values.map((v) => ({ label: v, type: 'enum' })) };
+        }
+      }
+      return null;
+    }
     return {
-      from: word ? word.from : ctx.pos,
+      from,
       options: items.map((it) => ({ label: it.label, type: KIND_TO_CM[it.kind], detail: it.detail })),
     };
   };

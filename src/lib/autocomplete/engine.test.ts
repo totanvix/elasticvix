@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { spec } from './spec';
-import { resolveCompletions, docCompletions, bodyCompletions, resolveValueField } from './engine';
+import {
+  resolveCompletions, docCompletions, bodyCompletions, resolveValueField,
+  bodyValueField, docValueField,
+} from './engine';
 import type { FlatField } from '../types';
 
 const fields: FlatField[] = [
@@ -104,5 +107,29 @@ describe('resolveValueField', () => {
   });
   it('returns undefined for a non-field key (size)', () => {
     expect(resolveValueField(['size'], false, f)).toBeUndefined();
+  });
+});
+
+describe('bodyValueField / docValueField', () => {
+  const f: FlatField[] = [{ path: 'status', type: 'keyword' }];
+
+  it('bodyValueField finds the field at a term value (Search body)', () => {
+    const doc = '{ "query": { "term": { "status": "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    expect(bodyValueField(doc, pos, f)).toBe('status');
+  });
+  it('bodyValueField returns undefined in a key position', () => {
+    const doc = '{ "query": { "term": { "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    expect(bodyValueField(doc, pos, f)).toBeUndefined();
+  });
+  it('docValueField finds the field at a term value (REST doc)', () => {
+    const doc = 'POST /logs/_search\n{ "query": { "term": { "status": "" } } }';
+    const pos = doc.indexOf('""') + 1;
+    expect(docValueField(doc, pos, f)).toBe('status');
+  });
+  it('docValueField returns undefined on the request line', () => {
+    const doc = 'GET /logs/_search\n{ }';
+    expect(docValueField(doc, 3, f)).toBeUndefined();
   });
 });
