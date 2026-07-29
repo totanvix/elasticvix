@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, RefreshCw } from 'lucide-react';
+import { ChevronDown, RefreshCw, List } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
@@ -13,6 +13,7 @@ type Props = {
   error?: string;
   onChange: (selected: string[]) => void;
   onReload: () => void;
+  onViewMapping: (index: string) => void;
 };
 
 function triggerLabel(selected: string[]): string {
@@ -21,7 +22,7 @@ function triggerLabel(selected: string[]): string {
   return `${selected[0]!} +${selected.length - 1}`;
 }
 
-export function IndicesSelect({ indices, selected, isLoading, error, onChange, onReload }: Props) {
+export function IndicesSelect({ indices, selected, isLoading, error, onChange, onReload, onViewMapping }: Props) {
   const [filter, setFilter] = useState('');
   const visible = indices.filter((i) => i.index.toLowerCase().includes(filter.trim().toLowerCase()));
 
@@ -61,6 +62,19 @@ export function IndicesSelect({ indices, selected, isLoading, error, onChange, o
               <Checkbox checked={selected.includes(i.index)} onCheckedChange={(v) => toggle(i.index, v === true)} />
               <span className="flex-1 truncate">{i.index}</span>
               {i.docsCount && <span className="text-xs text-muted-foreground tabular-nums">{i.docsCount}</span>}
+              <button
+                type="button"
+                aria-label={`View mapping for ${i.index}`}
+                title="View mapping"
+                className="shrink-0 rounded-sm p-1 text-muted-foreground hover:bg-background hover:text-foreground"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onViewMapping(i.index);
+                }}
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
             </label>
           ))}
           {!error && visible.length === 0 && (
