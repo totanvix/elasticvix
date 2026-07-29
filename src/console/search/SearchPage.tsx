@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Download, Wand2, Save } from 'lucide-react';
+import { Download, Wand2, Save, SpellCheck } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import type { Connection, FlatField } from '../../lib/types';
 import { makeGetFields } from '../editor/getFields';
 import { makeGetFieldValues } from '../editor/getFieldValues';
+import { useLintEnabled } from '../editor/useLintEnabled';
 import { ResponseView } from '../editor/ResponseView';
 import { ConnectionDialog } from '../connections/ConnectionDialog';
 import type { TestResult } from '../connections/useConnections';
@@ -43,6 +44,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
   const search = useSearch(active);
   const [openHit, setOpenHit] = useState<Hit | undefined>(undefined);
   const [mappingIndex, setMappingIndex] = useState<string | undefined>(undefined);
+  const { enabled: lintEnabled, toggle: toggleLint } = useLintEnabled();
   const [isAddOpen, setAddOpen] = useState(false);
   const [isSaveOpen, setSaveOpen] = useState(false);
   const [savedReloadKey, setSavedReloadKey] = useState(0);
@@ -136,6 +138,15 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
             Reset query
           </Button>
           <Button
+            variant={lintEnabled ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={toggleLint}
+            aria-label="Toggle field linting"
+            title={lintEnabled ? 'Field linting on' : 'Field linting off'}
+          >
+            <SpellCheck className="h-4 w-4" /> Lint
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             disabled={search.response === undefined}
@@ -154,6 +165,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
             onRun={() => void search.runSearch()}
             getFields={getFields}
             getFieldValues={getFieldValues}
+            lintEnabled={lintEnabled}
           />
         </div>
         <EditorResizeHandle height={editorHeight} onHeightChange={changeEditorHeight} />
