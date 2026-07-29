@@ -18,6 +18,7 @@ import { SearchEditor } from './SearchEditor';
 import { EditorResizeHandle, MIN_EDITOR_HEIGHT } from './EditorResizeHandle';
 import { HitsTable } from './HitsTable';
 import { DocDialog } from './DocDialog';
+import { MappingDialog } from './MappingDialog';
 import { SaveSearchDialog } from './SaveSearchDialog';
 import { SearchHistoryPopover } from './SearchHistoryPopover';
 import { SearchSavedPopover } from './SearchSavedPopover';
@@ -41,6 +42,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
   const indicesState = useIndices(active);
   const search = useSearch(active);
   const [openHit, setOpenHit] = useState<Hit | undefined>(undefined);
+  const [mappingIndex, setMappingIndex] = useState<string | undefined>(undefined);
   const [isAddOpen, setAddOpen] = useState(false);
   const [isSaveOpen, setSaveOpen] = useState(false);
   const [savedReloadKey, setSavedReloadKey] = useState(0);
@@ -114,6 +116,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
           error={indicesState.error}
           onChange={search.selectIndices}
           onReload={() => void indicesState.reload()}
+          onViewMapping={setMappingIndex}
         />
         <Button onClick={() => void search.runSearch()} disabled={!canSearch}>
           {search.isRunning ? 'Searching…' : 'Search'}
@@ -203,6 +206,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
       </Tabs>
 
       <DocDialog hit={openHit} onClose={() => setOpenHit(undefined)} />
+      <MappingDialog connection={active} index={mappingIndex} onClose={() => setMappingIndex(undefined)} />
       <SaveSearchDialog
         isOpen={isSaveOpen}
         indices={search.selected}
