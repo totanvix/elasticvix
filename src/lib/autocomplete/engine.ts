@@ -12,7 +12,7 @@ export interface CompletionItem {
   detail?: string;
 }
 
-type Resolved =
+export type Resolved =
   | { kind: 'object'; node: BodyNode }
   | { kind: 'array'; elem: string }
   | { kind: 'field' }
@@ -20,7 +20,7 @@ type Resolved =
   | { kind: 'enum'; values: string[] }
   | { kind: 'leaf' };
 
-function resolveDesc(spec: SpecData, desc: ValueDesc): Resolved {
+export function resolveDesc(spec: SpecData, desc: ValueDesc): Resolved {
   if (desc && typeof desc === 'object') return { kind: 'object', node: desc };
   const s = String(desc);
   if (s.startsWith('[') && s.endsWith(']')) return { kind: 'array', elem: s.slice(1, -1) };
