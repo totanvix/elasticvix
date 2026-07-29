@@ -37,7 +37,10 @@ export function MappingDialog({ connection, index, onClose }: Props) {
     <Dialog
       open={index !== undefined}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open) {
+          setFilter(''); // reset so reopening another index starts unfiltered
+          onClose();
+        }
       }}
     >
       <DialogContent className="max-w-lg">
