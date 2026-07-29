@@ -6,6 +6,7 @@ import { Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import type { FlatField } from '../../lib/types';
 import { bodyCompletionSource } from '../../lib/autocomplete/engine';
+import { searchFieldLinter } from '../editor/editorExtensions';
 import { useTheme } from '../theme';
 
 type Props = {
@@ -14,15 +15,17 @@ type Props = {
   onRun: () => void;
   getFields: () => Promise<FlatField[]>;
   getFieldValues: (field: string) => Promise<string[]>;
+  lintEnabled: boolean;
 };
 
-export function SearchEditor({ value, onChange, onRun, getFields, getFieldValues }: Props) {
+export function SearchEditor({ value, onChange, onRun, getFields, getFieldValues, lintEnabled }: Props) {
   const { theme } = useTheme();
 
   const extensions = useMemo(
     () => [
       json(),
       autocompletion({ override: [bodyCompletionSource(getFields, getFieldValues)] }),
+      ...(lintEnabled ? [searchFieldLinter(getFields)] : []),
       // Highest precedence so basicSetup's default Mod-Enter (insertBlankLine) doesn't win.
       Prec.highest(
         keymap.of([
@@ -36,7 +39,7 @@ export function SearchEditor({ value, onChange, onRun, getFields, getFieldValues
         ]),
       ),
     ],
-    [getFields, getFieldValues, onRun],
+    [getFields, getFieldValues, onRun, lintEnabled],
   );
 
   return (
