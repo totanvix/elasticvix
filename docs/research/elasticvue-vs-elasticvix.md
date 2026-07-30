@@ -6,6 +6,27 @@
 > - **Lợi thế thật của elasticvix (đã kiểm chứng):** autocomplete field-aware từ mapping thật — Elasticvue chỉ có keyword list tĩnh, phải bấm Ctrl+Space, gợi ý sai ngữ cảnh. Saved queries có tags, search history riêng — Elasticvue không có.
 > - **Chưa cần:** snapshots, nodes/shards monitoring, index templates, AWS IAM — admin territory, lệch ICP.
 
+## Trạng thái build
+
+> Cập nhật 2026-07-30. Đánh dấu tiến độ so với đề xuất ban đầu (🟢 đã build · ⚪ chưa). Chi tiết ở từng mục bên dưới.
+
+**🟢 Đã build**
+- **§1.2 Mappings viewer** — bảng field → type có search (`MappingDialog`).
+- **§1.5 Response QoL** — fold + download response, **và** filter theo path (`ResponseView` + `filterResponse.ts`).
+- **§1.1 Sửa/xoá document** — sửa + xoá **một** doc từ `DocDialog`: fetch tươi `_source`, PUT có `if_seq_no`/`if_primary_term`, DELETE, đều `refresh=wait_for`. *Bulk delete chưa (để follow-up).*
+- **§2.1 Gợi ý giá trị enum** cho keyword field — top values qua terms agg (`getFieldValues.ts`).
+- **§2.5 Lint query trước khi gửi** — cảnh báo field không có trong mapping (`@codemirror/lint`, có toggle bật/tắt).
+- **§2.5 Search/filter trong response** — chính là filter-by-path ở §1.5.
+
+**⚪ Chưa build**
+- **§1.1 Bulk delete** (checkbox nhiều dòng) — cố tình để lại làm follow-up.
+- **§1.3 Export/import config** — backup/restore connections + saved queries.
+- **§1.4 Multi-request console** kiểu Kibana.
+- **§2.1 Mở rộng spec.json** — vẫn ~8 query types gốc; thiếu `wildcard/prefix/fuzzy/multi_match/date_histogram...`.
+- **§2.5 Diff 2 response** (cần multi-request console).
+- **§1.6–1.10** (⚠️ cân nhắc): index admin actions, query-string box, aggregations tab, cluster overview, i18n.
+- **§1.11** (❌ chưa cần): nodes/shards, snapshots, index templates/aliases, AWS IAM, vim keybindings...
+
 ## Cách so sánh
 
 - **Elasticvue 1.15.0** chạy thật bằng Docker (`cars10/elasticvue`, cổng 9280), kết nối ES 8.14 demo trên cổng 9201 (bật CORS), seed 700 docs bằng `scripts/store/seed-es.mjs`. Đã click qua từng màn hình: Home, Nodes, Shards, Indices, Search, REST, Snapshots, Settings.
@@ -17,31 +38,31 @@
 
 Bảng tổng quan, chi tiết từng nhóm bên dưới:
 
-| Nhóm | Tính năng | Đề xuất |
-|---|---|---|
-| Document | Sửa document inline, xoá document (đơn + bulk) | ✅ Nên thêm |
-| Index | Mappings viewer (xem info/mapping của index) | ✅ Nên thêm |
-| App | Export/import config (backup JSON) | ✅ Nên thêm |
-| REST | Multi-tab / nhiều request | ✅ Nên thêm (kiểu Kibana) |
-| REST | Fold/expand response, download response | ✅ Nên thêm |
-| Index | Hành động quản trị index (create, delete, refresh, flush...) | ⚠️ Cân nhắc (bản tối giản) |
-| Search | Query-string box + search examples | ⚠️ Cân nhắc |
-| Search | Tab Aggregations render riêng | ⚠️ Cân nhắc |
-| Cluster | Trang cluster overview (info + health chi tiết) | ⚠️ Cân nhắc (bản nhẹ) |
-| App | i18n (8 ngôn ngữ) | ⚠️ Cân nhắc (làm khung sớm) |
-| Cluster | Nodes view, Shards view, shard recovery/allocation | ❌ Chưa cần |
-| Snapshot | Snapshot repositories + restore | ❌ Chưa cần |
-| Index | Index templates, aliases UI, clone/forcemerge/close/read-only | ❌ Chưa cần |
-| Auth | AWS IAM (SigV4) | ❌ Chưa cần |
-| App | Vim keybindings, hide-indices regex, localize timestamp | ❌ Chưa cần |
+| Nhóm | Tính năng | Đề xuất | Trạng thái |
+|---|---|---|---|
+| Document | Sửa document inline, xoá document (đơn + bulk) | ✅ Nên thêm | 🟢 Đơn xong · ⚪ bulk |
+| Index | Mappings viewer (xem info/mapping của index) | ✅ Nên thêm | 🟢 Xong |
+| App | Export/import config (backup JSON) | ✅ Nên thêm | ⚪ Chưa |
+| REST | Multi-tab / nhiều request | ✅ Nên thêm (kiểu Kibana) | ⚪ Chưa |
+| REST | Fold/expand response, download response | ✅ Nên thêm | 🟢 Xong (+ filter) |
+| Index | Hành động quản trị index (create, delete, refresh, flush...) | ⚠️ Cân nhắc (bản tối giản) | ⚪ Chưa |
+| Search | Query-string box + search examples | ⚠️ Cân nhắc | ⚪ Chưa |
+| Search | Tab Aggregations render riêng | ⚠️ Cân nhắc | ⚪ Chưa |
+| Cluster | Trang cluster overview (info + health chi tiết) | ⚠️ Cân nhắc (bản nhẹ) | ⚪ Chưa |
+| App | i18n (8 ngôn ngữ) | ⚠️ Cân nhắc (làm khung sớm) | ⚪ Chưa |
+| Cluster | Nodes view, Shards view, shard recovery/allocation | ❌ Chưa cần | ⚪ Chưa |
+| Snapshot | Snapshot repositories + restore | ❌ Chưa cần | ⚪ Chưa |
+| Index | Index templates, aliases UI, clone/forcemerge/close/read-only | ❌ Chưa cần | ⚪ Chưa |
+| Auth | AWS IAM (SigV4) | ❌ Chưa cần | ⚪ Chưa |
+| App | Vim keybindings, hide-indices regex, localize timestamp | ❌ Chưa cần | ⚪ Chưa |
 
-### 1.1. Sửa / xoá document — ✅ Nên thêm
+### 1.1. Sửa / xoá document — ✅ Nên thêm · 🟢 ĐÃ BUILD (đơn; bulk delete chưa)
 
 - **Là gì:** trong Search results của Elasticvue, double-click một hit mở modal hiện full JSON kèm metadata (`_version`, `_seq_no`...), sửa trực tiếp rồi bấm **UPDATE DOCUMENT**. Checkbox từng dòng + bulk action **Delete document**.
 - **Lợi ích:** dev debug data xấu sửa được ngay tại chỗ, không phải viết tay `POST /index/_update/id`. Đây là thao tác lặp lại nhiều lần trong ngày khi làm việc với dữ liệu thật.
 - **Đánh giá:** elasticvix đã có `DocDialog` hiện JSON chỉ đọc — thêm nút Edit/Save + Delete là bước tự nhiên, effort nhỏ, đúng ICP (dev thao tác dữ liệu hằng ngày). Đáng làm nhất trong danh sách.
 
-### 1.2. Mappings viewer — ✅ Nên thêm
+### 1.2. Mappings viewer — ✅ Nên thêm · 🟢 ĐÃ BUILD
 
 - **Là gì:** xem mapping/settings của index dưới dạng UI (Elasticvue để trong menu index → Show info).
 - **Lợi ích:** viết query đúng phải biết field nào là `keyword` field nào là `text` — hiện dev phải tự gõ `GET /index/_mapping` rồi đọc JSON thô.
@@ -59,7 +80,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 - **Lợi ích:** so sánh 2 query, giữ nguyên ngữ cảnh khi thử nghiệm.
 - **Đánh giá:** nên làm theo **kiểu Kibana Dev Tools** (nhiều request trong 1 editor, Cmd+Enter chạy request tại cursor) thay vì tabs — hợp DNA "Kibana-style console" của elasticvix hơn, và là thứ dev Kibana đã quen tay. Parser `requestLine.ts` hiện tại đã tách dòng `METHOD /path` — mở rộng lên multi-block là khả thi.
 
-### 1.5. QoL cho response viewer — ✅ Nên thêm
+### 1.5. QoL cho response viewer — ✅ Nên thêm · 🟢 ĐÃ BUILD (fold + download + filter)
 
 - **Là gì:** Elasticvue có fold/expand từng node JSON (`unfold_more`/`unfold_less`) và **DOWNLOAD RESPONSE BODY**.
 - **Lợi ích:** response `_search` vài nghìn dòng mà không fold được thì gần như không đọc nổi.
@@ -111,8 +132,8 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 elasticvix: engine đọc syntax tree, đi theo key-path, gợi ý đúng ngữ cảnh + **tên field và type thật từ `_mapping`**, tự bật khi gõ. Không GUI miễn phí nào đang có tính năng này — đây là lý do tồn tại của sản phẩm.
 
 **Khoét sâu:**
-- **Mở rộng `spec.json`** — hiện chỉ ~8 query types (`bool/match/match_phrase/term/terms/range/exists/match_all`) và 5 aggs (`terms/avg/sum/max/min`). Thiếu `wildcard`, `prefix`, `fuzzy`, `nested`, `multi_match`, `function_score`, `date_histogram`, `percentiles`... Mỗi entry thêm vào là autocomplete tốt hơn Elasticvue thêm một bậc.
-- **Gợi ý giá trị enum** cho keyword field (chạy `terms` agg lấy top values) — không tool nào có.
+- ⚪ **Mở rộng `spec.json`** (CHƯA) — vẫn chỉ ~8 query types (`bool/match/match_phrase/term/terms/range/exists/match_all`) và 5 aggs (`terms/avg/sum/max/min`). Thiếu `wildcard`, `prefix`, `fuzzy`, `nested`, `multi_match`, `function_score`, `date_histogram`, `percentiles`... Mỗi entry thêm vào là autocomplete tốt hơn Elasticvue thêm một bậc.
+- 🟢 **Gợi ý giá trị enum** cho keyword field (chạy `terms` agg lấy top values) — **ĐÃ BUILD** (`getFieldValues.ts`), không tool nào có.
 
 ### 2.2. Saved queries + history — hơn sẵn, nên giữ khoảng cách
 
@@ -130,9 +151,9 @@ Elasticvue chỉ có none / basic / API key / AWS IAM — **không có bearer/JW
 
 ### 2.5. Những chỗ cả hai cùng yếu — cơ hội vượt
 
-- **Search/filter trong response** — response dài muốn tìm 1 field phải Cmd+F cả trang. Chưa ai có filter theo JSON path.
-- **Lint query trước khi gửi** — elasticvix đã có `@codemirror/lint` trong dependencies; báo lỗi field không tồn tại trong mapping *trước khi* gửi là thứ chưa tool nào làm.
-- **Diff 2 response** — chạy 2 biến thể query rồi so kết quả; hợp multi-request console (1.4).
+- 🟢 **Search/filter trong response** — **ĐÃ BUILD** (filter theo path trong `ResponseView`, xem §1.5). Chưa GUI nào có filter theo JSON path.
+- 🟢 **Lint query trước khi gửi** — **ĐÃ BUILD** (`@codemirror/lint`, có toggle): báo field không có trong mapping *trước khi* gửi — chưa tool nào làm.
+- ⚪ **Diff 2 response** (CHƯA) — chạy 2 biến thể query rồi so kết quả; hợp multi-request console (1.4).
 
 Lưu ý cho công bằng: local-first / không telemetry **không phải** differentiator — Elasticvue cũng local và open source. Phân phối cũng ngang: Elasticvue có đủ web/docker/desktop/extension, hỗ trợ mọi version ES (kể cả EOL).
 
@@ -140,11 +161,11 @@ Lưu ý cho công bằng: local-first / không telemetry **không phải** diffe
 
 ## Thứ tự đề xuất
 
-1. **Mappings viewer** — rẻ nhất (data đã có sẵn), giá trị ngay.
-2. **Sửa/xoá document** — bước tự nhiên từ DocDialog, đúng nhu cầu hằng ngày.
-3. **Response QoL** (fold + download) — effort nhỏ.
-4. **Export/import config** — chống mất dữ liệu, giữ chân user.
-5. **Multi-request console kiểu Kibana** — nới rộng lợi thế console.
-6. **Mở rộng autocomplete spec + enum values** — khoét sâu moat, chạy song song các mục trên.
+1. 🟢 **Mappings viewer** — rẻ nhất (data đã có sẵn), giá trị ngay. → **ĐÃ BUILD**
+2. 🟢 **Sửa/xoá document** — bước tự nhiên từ DocDialog, đúng nhu cầu hằng ngày. → **ĐÃ BUILD** (đơn; bulk delete chưa)
+3. 🟢 **Response QoL** (fold + download) — effort nhỏ. → **ĐÃ BUILD** (+ filter)
+4. ⚪ **Export/import config** — chống mất dữ liệu, giữ chân user. → chưa
+5. ⚪ **Multi-request console kiểu Kibana** — nới rộng lợi thế console. → chưa
+6. **Mở rộng autocomplete spec + enum values** — khoét sâu moat, chạy song song các mục trên. → 🟢 enum values **ĐÃ BUILD** · ⚪ mở rộng spec chưa
 
-Muốn tôi đào sâu phần nào — ví dụ spec chi tiết cho một mục ✅, hay ước lượng effort từng mục?
+**Còn lại đáng làm nhất:** §1.1 bulk delete (nối tiếp phần vừa build), §1.3 export/import config, §1.4 multi-request console, §2.1 mở rộng spec.json.
