@@ -24,12 +24,15 @@ English
 Elasticvix is an Elasticsearch client that runs entirely in your browser. Connect to any cluster and start querying in seconds — no server, no desktop app.
 
 QUERY CONSOLE
-• Write Query DSL with autocomplete that knows your data: suggestions include real field names read from your index mappings, not just keywords
-• Context-aware suggestions for API endpoints and query DSL
-• JSON linting, formatting, and Cmd/Ctrl+Enter to run
+• Autocomplete that knows your data: real field names and real field values (top values of keyword fields), read live from your cluster — not just keywords
+• Context-aware suggestions for API endpoints and Query DSL
+• Field linting: flags fields that aren't in your index mapping before you run
+• Response viewer with JSON folding, path filtering, and one-click download
+• Formatting and Cmd/Ctrl+Enter to run
 
 SEARCH UI
 • Pick indices and search without hand-writing full requests
+• Browse each index's mapping as a searchable field → type table
 • Results in a hits table with a document detail view
 • Run aggregations and inspect results in the raw response view
 • Download results as JSON

@@ -13,12 +13,15 @@ Elasticvix is a Chrome extension (Manifest V3) built with [WXT](https://wxt.dev)
 ## Features
 
 **Query console**
-- Query DSL autocomplete that knows your data — suggestions include real field names read from your index mappings, not just static keywords
-- Context-aware suggestions for API endpoints and query DSL
-- JSON linting, formatting, and `Cmd`/`Ctrl` + `Enter` to run
+- Autocomplete that knows your data — real field **names** and real field **values** (top values of keyword fields), read live from your cluster, not just static keywords
+- Context-aware suggestions for API endpoints and Query DSL
+- Field linting — flags fields that aren't in the index mapping before you run (toggle on/off)
+- Response viewer with JSON folding, path filtering, and one-click download
+- JSON formatting and `Cmd`/`Ctrl` + `Enter` to run
 
 **Search UI**
 - Pick indices and search without hand-writing full requests
+- Browse each index's mapping as a searchable field → type table
 - Results in a hits table with a document detail view
 - Run aggregations and inspect the raw response
 - Download results as JSON
