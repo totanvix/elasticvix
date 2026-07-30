@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { keymap } from '@codemirror/view';
-import { SpellCheck } from 'lucide-react';
+import { Wand2 } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import type { Connection } from '../../lib/types';
 import { useTheme } from '../theme';
 import { makeGetFields } from './getFields';
 import { makeGetFieldValues } from './getFieldValues';
 import { buildEditorExtensions } from './editorExtensions';
 import { useLintEnabled } from './useLintEnabled';
+import { LintToggle } from './LintToggle';
 
 type Props = {
   active: Connection | undefined;
@@ -50,18 +52,15 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
         <Button size="sm" variant="outline" onClick={onSave}>
           Save
         </Button>
-        <Button size="sm" variant="outline" onClick={onFormat}>
-          Format
-        </Button>
-        <Button
-          size="sm"
-          variant={lintEnabled ? 'secondary' : 'ghost'}
-          onClick={toggleLint}
-          aria-label="Toggle field linting"
-          title={lintEnabled ? 'Field linting on' : 'Field linting off'}
-        >
-          <SpellCheck className="h-4 w-4" /> Lint
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline" className="w-8 px-0" onClick={onFormat} aria-label="Format">
+              <Wand2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Format</TooltipContent>
+        </Tooltip>
+        <LintToggle enabled={lintEnabled} onToggle={toggleLint} />
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         <CodeMirror

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Download, Wand2, Save, SpellCheck } from 'lucide-react';
+import { Download, Wand2, Save, MoreHorizontal } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import type { Connection, FlatField } from '../../lib/types';
 import { makeGetFields } from '../editor/getFields';
 import { makeGetFieldValues } from '../editor/getFieldValues';
 import { useLintEnabled } from '../editor/useLintEnabled';
+import { LintToggle } from '../editor/LintToggle';
 import { ResponseView } from '../editor/ResponseView';
 import { ConnectionDialog } from '../connections/ConnectionDialog';
 import type { TestResult } from '../connections/useConnections';
@@ -47,6 +50,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
   const { enabled: lintEnabled, toggle: toggleLint } = useLintEnabled();
   const [isAddOpen, setAddOpen] = useState(false);
   const [isSaveOpen, setSaveOpen] = useState(false);
+  const [isMoreOpen, setMoreOpen] = useState(false);
   const [savedReloadKey, setSavedReloadKey] = useState(0);
   const [editorHeight, setEditorHeight] = useState(loadEditorHeight);
 
@@ -128,32 +132,50 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
         <div className="ml-auto flex items-center gap-2">
           <SearchHistoryPopover reloadKey={search.ranAt} onLoad={search.load} />
           <SearchSavedPopover reloadKey={savedReloadKey} onLoad={search.load} />
-          <Button variant="outline" size="sm" onClick={search.format}>
-            <Wand2 className="h-4 w-4" /> Format
-          </Button>
+          <div aria-hidden className="mx-1 h-5 w-px bg-border" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-8 px-0"
+                onClick={search.format}
+                aria-label="Format JSON"
+              >
+                <Wand2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Format JSON</TooltipContent>
+          </Tooltip>
           <Button variant="outline" size="sm" disabled={search.selected.length === 0} onClick={() => setSaveOpen(true)}>
             <Save className="h-4 w-4" /> Save
           </Button>
-          <Button variant="outline" size="sm" onClick={() => search.changeQuery(DEFAULT_QUERY)}>
-            Reset query
-          </Button>
-          <Button
-            variant={lintEnabled ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={toggleLint}
-            aria-label="Toggle field linting"
-            title={lintEnabled ? 'Field linting on' : 'Field linting off'}
-          >
-            <SpellCheck className="h-4 w-4" /> Lint
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={search.response === undefined}
-            onClick={() => downloadJson(search.response?.body, searchDownloadName(new Date()))}
-          >
-            <Download className="h-4 w-4" /> JSON
-          </Button>
+          <LintToggle enabled={lintEnabled} onToggle={toggleLint} />
+          <Popover open={isMoreOpen} onOpenChange={setMoreOpen}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-8 px-0" aria-label="More actions">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+              </TooltipTrigger>
+              <TooltipContent>More actions</TooltipContent>
+            </Tooltip>
+            <PopoverContent align="end" className="w-48 p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => {
+                  search.changeQuery(DEFAULT_QUERY);
+                  setMoreOpen(false);
+                }}
+              >
+                Reset query
+              </Button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -186,10 +208,20 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
       )}
 
       <Tabs defaultValue="hits" className="flex min-h-0 flex-1 flex-col">
-        <TabsList>
-          <TabsTrigger value="hits">Hits</TabsTrigger>
-          <TabsTrigger value="raw">Raw</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="hits">Hits</TabsTrigger>
+            <TabsTrigger value="raw">Raw</TabsTrigger>
+          </TabsList>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={search.response === undefined}
+            onClick={() => downloadJson(search.response?.body, searchDownloadName(new Date()))}
+          >
+            <Download className="h-4 w-4" /> JSON
+          </Button>
+        </div>
         <TabsContent value="hits" className="min-h-0 flex-1 overflow-hidden rounded-md border">
           {hasResults ? (
             <HitsTable

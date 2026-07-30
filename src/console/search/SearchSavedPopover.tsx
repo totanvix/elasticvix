@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Star, Trash2 } from 'lucide-react';
+import { Library, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -57,13 +57,13 @@ export function SearchSavedPopover({ reloadKey, onLoad }: Props) {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm">
-          <Star className="h-4 w-4" /> Saved
+          <Library className="h-4 w-4" /> Library
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-2" align="end">
         {all.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-6 text-center">
-            <Star className="h-5 w-5 text-muted-foreground" />
+            <Library className="h-5 w-5 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">No saved queries yet</p>
             <p className="text-xs text-muted-foreground">Save a search to reuse it later.</p>
           </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ThemeProvider } from './theme';
+import { TooltipProvider } from './ui/tooltip';
 import { AppShell, RestPanes } from './layout/ConsoleLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useConnections } from './connections/useConnections';
@@ -59,7 +60,7 @@ function ConsoleInner() {
             leftRail={
               <Tabs defaultValue="saved" className="h-full p-2">
                 <TabsList>
-                  <TabsTrigger value="saved">Saved</TabsTrigger>
+                  <TabsTrigger value="saved">Library</TabsTrigger>
                   <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="saved" className="overflow-y-auto">
@@ -99,7 +100,9 @@ function ConsoleInner() {
 export function App() {
   return (
     <ThemeProvider>
-      <ConsoleInner />
+      <TooltipProvider>
+        <ConsoleInner />
+      </TooltipProvider>
     </ThemeProvider>
   );
 }
