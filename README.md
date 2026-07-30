@@ -2,7 +2,7 @@
 
 **An Elasticsearch client that runs entirely in your browser.** Connect to any cluster and start querying in seconds — no server, no desktop app, nothing sent to us.
 
-Elasticvix is a Chrome extension (Manifest V3) built with [WXT](https://wxt.dev), React, and TypeScript. Query console with field-aware autocomplete, a point-and-click search UI, saved queries, and multi-cluster support — all local.
+Elasticvix is a Chrome extension (Manifest V3) built with [WXT](https://wxt.dev), React, and TypeScript. A cluster overview, a query console with field-aware autocomplete, a point-and-click search UI, saved queries, and multi-cluster support — all local.
 
 - 🌐 **Homepage:** <https://totanvix.github.io/elasticvix/>
 - 📦 **Source:** <https://github.com/totanvix/elasticvix>
@@ -11,6 +11,10 @@ Elasticvix is a Chrome extension (Manifest V3) built with [WXT](https://wxt.dev)
 ![Elasticvix search view](docs/store/screenshots/01-search.png)
 
 ## Features
+
+**Cluster overview** (the tab it opens on)
+- Cluster health, version, and shard / index / doc counts at a glance
+- Per-node table with RAM, JVM heap, disk, and CPU usage
 
 **Query console**
 - Autocomplete that knows your data — real field **names** and real field **values** (top values of keyword fields), read live from your cluster, not just static keywords
@@ -23,6 +27,7 @@ Elasticvix is a Chrome extension (Manifest V3) built with [WXT](https://wxt.dev)
 - Pick indices and search without hand-writing full requests
 - Browse each index's mapping as a searchable field → type table
 - Results in a hits table with a document detail view
+- Edit or delete a document straight from the results (inline confirm before delete)
 - Run aggregations and inspect the raw response
 - Download results as JSON
 

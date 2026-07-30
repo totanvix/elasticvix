@@ -36,8 +36,14 @@ SEARCH UI
 • Pick indices and search visually, without hand-writing full requests
 • Open any index's mapping as a searchable field → type table — no more reading raw _mapping JSON
 • Results in a sortable hits table with a full document detail view
+• Edit or delete a document straight from the results — no hand-written _update or DELETE, and a confirm step before anything is deleted
 • Run aggregations and inspect the raw response
 • Download results as JSON
+
+CLUSTER OVERVIEW
+• The tab it opens on: cluster health, version, and shard, index, and document counts at a glance
+• A per-node table showing RAM, JVM heap, disk, and CPU usage — the numbers you actually check
+• One-click refresh, and each section loads on its own so a slow cluster never blanks the page
 
 SAVED QUERIES & HISTORY
 • Save queries with names and tags, and find them again by search or tag

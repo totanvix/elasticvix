@@ -136,7 +136,21 @@
   <main class="wrap">
     <section class="feature">
       <div class="feature-media">
-        <img class="shot" src="./assets/02-console-autocomplete.png" alt="Query console with field-aware autocomplete" width="1280" height="800">
+        <img class="shot" src="./assets/06-cluster.png" alt="Cluster overview with a per-node resource table" width="1280" height="800">
+      </div>
+      <div class="feature-text">
+        <h2>Cluster Overview</h2>
+        <ul>
+          <li>The tab it opens on: cluster health, version, and shard / index / doc counts at a glance</li>
+          <li>Per-node table with RAM, JVM heap, disk, and CPU usage</li>
+          <li>One-click refresh; each section loads on its own</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="feature">
+      <div class="feature-media">
+        <img class="shot" src="./assets/02-console-autocomplete.png" alt="Query console with field-aware autocomplete" width="1280" height="800" loading="lazy">
       </div>
       <div class="feature-text">
         <h2>Query Console</h2>
@@ -160,6 +174,7 @@
           <li>Pick indices and search without hand-writing full requests</li>
           <li>Browse each index's mapping as a searchable field → type table</li>
           <li>Results in a hits table with a document detail view</li>
+          <li>Edit or delete a document straight from the results, with a confirm before delete</li>
           <li>Run aggregations and inspect results in the raw response view</li>
           <li>Download results as JSON</li>
         </ul>

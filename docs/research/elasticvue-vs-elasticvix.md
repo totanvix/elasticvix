@@ -17,6 +17,7 @@
 - **§2.1 Gợi ý giá trị enum** cho keyword field — top values qua terms agg (`getFieldValues.ts`).
 - **§2.5 Lint query trước khi gửi** — cảnh báo field không có trong mapping (`@codemirror/lint`, có toggle bật/tắt).
 - **§2.5 Search/filter trong response** — chính là filter-by-path ở §1.5.
+- **§1.9 Cluster overview** — **tab CLUSTER** (view mặc định): health + version + summary cards + **bảng per-node RAM/heap/disk/CPU** (`_cluster/health` + `GET /` + `_cluster/stats` + `_cat/nodes`). Làm dạng tab per-node thay vì popover "bản nhẹ" ban đầu.
 
 **⚪ Chưa build**
 - **§1.1 Bulk delete** (checkbox nhiều dòng) — cố tình để lại làm follow-up.
@@ -24,7 +25,7 @@
 - **§1.4 Multi-request console** kiểu Kibana.
 - **§2.1 Mở rộng spec.json** — vẫn ~8 query types gốc; thiếu `wildcard/prefix/fuzzy/multi_match/date_histogram...`.
 - **§2.5 Diff 2 response** (cần multi-request console).
-- **§1.6–1.10** (⚠️ cân nhắc): index admin actions, query-string box, aggregations tab, cluster overview, i18n.
+- **§1.6–1.10** (⚠️ cân nhắc): index admin actions, query-string box, aggregations tab, i18n. *(§1.9 cluster overview đã build ở trên.)*
 - **§1.11** (❌ chưa cần): nodes/shards, snapshots, index templates/aliases, AWS IAM, vim keybindings...
 
 ## Cách so sánh
@@ -48,7 +49,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 | Index | Hành động quản trị index (create, delete, refresh, flush...) | ⚠️ Cân nhắc (bản tối giản) | ⚪ Chưa |
 | Search | Query-string box + search examples | ⚠️ Cân nhắc | ⚪ Chưa |
 | Search | Tab Aggregations render riêng | ⚠️ Cân nhắc | ⚪ Chưa |
-| Cluster | Trang cluster overview (info + health chi tiết) | ⚠️ Cân nhắc (bản nhẹ) | ⚪ Chưa |
+| Cluster | Trang cluster overview (info + health chi tiết) | ⚠️ Cân nhắc (bản nhẹ) | 🟢 Xong (tab per-node) |
 | App | i18n (8 ngôn ngữ) | ⚠️ Cân nhắc (làm khung sớm) | ⚪ Chưa |
 | Cluster | Nodes view, Shards view, shard recovery/allocation | ❌ Chưa cần | ⚪ Chưa |
 | Snapshot | Snapshot repositories + restore | ❌ Chưa cần | ⚪ Chưa |
@@ -103,7 +104,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 - **Là gì:** khi query có `aggs`, Elasticvue render kết quả aggregations ở tab riêng thay vì bắt đọc raw JSON.
 - **Đánh giá:** elasticvix đang để user đọc aggs trong tab Raw. Một tab render buckets dạng bảng là nâng cấp tốt cho use case phân tích, nhưng đứng sau các mục ✅ về độ cấp thiết.
 
-### 1.9. Cluster overview — ⚠️ Cân nhắc bản nhẹ
+### 1.9. Cluster overview — ⚠️ Cân nhắc bản nhẹ · 🟢 ĐÃ BUILD (tab CLUSTER, per-node RAM/heap/disk)
 
 - **Là gì:** trang Home của Elasticvue: cluster info (version, build...), health chi tiết (shards active/unassigned, pending tasks), đếm nodes/indices/docs/disk.
 - **Đánh giá:** elasticvix đã có health dot — thêm 1 popover/panel hiện chi tiết `_cluster/health` + `GET /` khi click là đủ dùng, không cần cả trang. Rẻ, đáng làm ở mức popover.
