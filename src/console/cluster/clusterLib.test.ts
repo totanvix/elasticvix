@@ -71,7 +71,7 @@ describe('parseNodes', () => {
     'disk.used': '15.8gb', 'disk.total': '99.3gb', 'disk.used_percent': '15.93',
   };
   it('maps a node row and rounds percents', () => {
-    const [n] = parseNodes([row])!;
+    const n = parseNodes([row])![0]!;
     expect(n.name).toBe('n1');
     expect(n.isMaster).toBe(true);
     expect(n.ramPercent).toBe(20);
@@ -79,10 +79,10 @@ describe('parseNodes', () => {
     expect(n.ramCurrent).toBe('1.5gb');
   });
   it('flags a non-master node', () => {
-    expect(parseNodes([{ ...row, master: '-' }])![0].isMaster).toBe(false);
+    expect(parseNodes([{ ...row, master: '-' }])![0]!.isMaster).toBe(false);
   });
   it('leaves missing metrics undefined', () => {
-    const [n] = parseNodes([{ name: 'n2' }])!;
+    const n = parseNodes([{ name: 'n2' }])![0]!;
     expect(n.ramPercent).toBeUndefined();
     expect(n.ramCurrent).toBeUndefined();
   });

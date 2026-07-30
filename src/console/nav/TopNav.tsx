@@ -7,7 +7,7 @@ import { ConnectionStatusChip } from '../connections/ConnectionStatusChip';
 import { useConnectionStatus } from '../connections/useConnectionStatus';
 import type { TestResult } from '../connections/useConnections';
 
-export type ConsoleView = 'search' | 'rest';
+export type ConsoleView = 'cluster' | 'search' | 'rest';
 
 type Props = {
   view: ConsoleView;
@@ -21,6 +21,7 @@ type Props = {
 };
 
 const NAV_ITEMS: { view: ConsoleView; label: string }[] = [
+  { view: 'cluster', label: 'CLUSTER' },
   { view: 'search', label: 'SEARCH' },
   { view: 'rest', label: 'REST' },
 ];
