@@ -369,6 +369,17 @@ try {
     await save('05-dark-mode.png');
   });
 
+  // --- 6. Cluster overview tab (health + per-node RAM/heap/disk table) ---
+  await run(6, async () => {
+    await switchToConnection('Local demo');
+    await ensureTheme('light');
+    await goToView('CLUSTER');
+    // Wait for the node table to render (proves the four fetches resolved).
+    await page.waitForFunction(() => document.querySelectorAll('table tbody tr').length > 0, { timeout: 15000 });
+    await sleep(800);
+    await save('06-cluster.png');
+  });
+
   console.log('Done.');
 } finally {
   if (browser) await browser.close();
