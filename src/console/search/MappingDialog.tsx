@@ -48,24 +48,26 @@ export function MappingDialog({ connection, index, onClose }: Props) {
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate font-mono">{index}</span>
             <span className="text-sm font-normal text-muted-foreground tabular-nums">{fields.length} fields</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-auto h-7 w-7"
-              aria-label="Reload mapping"
-              onClick={() => void reload()}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
-        <Input
-          placeholder="Filter fields…"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="h-8"
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            placeholder="Filter fields…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="h-8"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            aria-label="Reload mapping"
+            onClick={() => void reload()}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
 
         <div className="max-h-[60vh] overflow-auto rounded-md border">
           {error ? (

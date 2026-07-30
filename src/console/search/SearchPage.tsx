@@ -208,7 +208,7 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
       )}
 
       <Tabs defaultValue="hits" className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <TabsList>
             <TabsTrigger value="hits">Hits</TabsTrigger>
             <TabsTrigger value="raw">Raw</TabsTrigger>
