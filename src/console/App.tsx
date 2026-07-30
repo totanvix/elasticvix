@@ -12,11 +12,13 @@ import { SavedQueriesPanel } from './library/SavedQueriesPanel';
 import { HistoryPanel } from './library/HistoryPanel';
 import { TopNav, type ConsoleView } from './nav/TopNav';
 import { SearchPage } from './search/SearchPage';
+import { ClusterPage } from './cluster/ClusterPage';
 
 const VIEW_KEY = 'elasticvix.view';
 
 function loadView(): ConsoleView {
-  return localStorage.getItem(VIEW_KEY) === 'rest' ? 'rest' : 'search';
+  const v = localStorage.getItem(VIEW_KEY);
+  return v === 'search' || v === 'rest' ? v : 'cluster';
 }
 
 function ConsoleInner() {
@@ -51,7 +53,11 @@ function ConsoleInner() {
           />
         }
       >
-        {view === 'search' ? (
+        {view === 'cluster' ? (
+          <main className="min-w-0 flex-1 overflow-hidden">
+            <ClusterPage active={conns.active} />
+          </main>
+        ) : view === 'search' ? (
           <main className="min-w-0 flex-1 overflow-hidden">
             <SearchPage active={conns.active} onSaveConnection={conns.addOrUpdate} onTestConnection={conns.test} />
           </main>
