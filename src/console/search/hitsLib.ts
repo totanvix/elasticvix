@@ -1,6 +1,7 @@
 export interface Hit {
   _index?: string;
   _id?: string;
+  _type?: string;
   _score?: number | null;
   _source?: Record<string, unknown>;
 }

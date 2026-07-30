@@ -191,7 +191,7 @@ git commit -m "feat(search): pure helpers for document write path and parsing"
 
 **Interfaces:**
 - Consumes: `documentPath`, `writePath`, `extractDocMeta`, `parseEditableSource`, `DocRef`, `DocMeta` (Task 1); `esRequest` (`src/lib/rpc/client.ts`); `esErrorReason` (`src/console/search/searchLib.ts`); `useTheme` (`src/console/theme`); `Hit` (`hitsLib.ts`).
-- Produces: `DocDialog` props `{ hit?: Hit; connection: Connection; onClose: () => void; onChanged: () => void }`.
+- Produces: `DocDialog` props `{ hit?: Hit; connection: Connection; onClose: () => void; onChanged: (removed: boolean) => void }`. `onChanged(false)` after a save, `onChanged(true)` after a delete — the caller reads the pre-refresh row count to decide page step-back.
 
 - [ ] **Step 1: Add `_type` to the Hit interface**
 
@@ -438,20 +438,17 @@ In `src/console/search/SearchPage.tsx`, replace the `DocDialog` usage (currently
         hit={openHit}
         connection={active}
         onClose={() => setOpenHit(undefined)}
-        onChanged={() => {
-          void (async () => {
-            await search.goToPage(search.page);
-            // Deleting the last row on a later page would strand the user on an
-            // empty page; step back one page in that case.
-            if (search.page > 1 && extractHits(search.response?.body).length === 0) {
-              await search.goToPage(search.page - 1);
-            }
-          })();
+        onChanged={(removed) => {
+          // Read the pre-refresh row count: deleting the last row on a later page
+          // would strand the user on an empty page, so step back one instead.
+          const stepBack =
+            removed && search.page > 1 && extractHits(search.response?.body).length <= 1;
+          void search.goToPage(stepBack ? search.page - 1 : search.page);
         }}
       />
 ```
 
-Note: `active` is guaranteed defined in this branch of `SearchPage` (the hits table only renders when `active` is set). `extractHits` and `search` are already in scope. `search.goToPage` re-runs without recording history.
+Note: `active` is guaranteed defined in this branch of `SearchPage` (the hits table only renders when `active` is set). `extractHits` and `search` are already in scope. `search.goToPage` re-runs without recording history. The pre-refresh row count is read from `search.response` *before* the async `goToPage`, avoiding a stale-closure read of the post-refresh state — and only `removed` (delete) can shrink the row set, so an edit always refreshes the same page.
 
 - [ ] **Step 4: Typecheck**
 

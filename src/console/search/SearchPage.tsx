@@ -249,7 +249,18 @@ export function SearchPage({ active, onSaveConnection, onTestConnection }: Props
         </TabsContent>
       </Tabs>
 
-      <DocDialog hit={openHit} onClose={() => setOpenHit(undefined)} />
+      <DocDialog
+        hit={openHit}
+        connection={active}
+        onClose={() => setOpenHit(undefined)}
+        onChanged={(removed) => {
+          // Read the pre-refresh row count: deleting the last row on a later page
+          // would strand the user on an empty page, so step back one instead.
+          const stepBack =
+            removed && search.page > 1 && extractHits(search.response?.body).length <= 1;
+          void search.goToPage(stepBack ? search.page - 1 : search.page);
+        }}
+      />
       <MappingDialog connection={active} index={mappingIndex} onClose={() => setMappingIndex(undefined)} />
       <SaveSearchDialog
         isOpen={isSaveOpen}
