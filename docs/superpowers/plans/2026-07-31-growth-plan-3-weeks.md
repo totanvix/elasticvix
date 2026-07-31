@@ -10,11 +10,11 @@
 
 | Chỉ số | Nguồn đo | Baseline (điền trước khi bắt đầu) | Mục tiêu |
 |---|---|---|---|
-| Weekly users | CWS dashboard → Stats | ___ | ≥ 100 |
-| Tổng installs | CWS dashboard | ___ | ≥ 300 |
-| GitHub stars | repo totanvix/elasticvix | ___ | ≥ 50 |
+| Weekly users | CWS dashboard → Stats | 2 | ≥ 100 |
+| Tổng installs | CWS dashboard | 28 | ≥ 300 |
+| GitHub stars | repo totanvix/elasticvix | 0 | ≥ 50 |
 | Website visits/tuần | GoatCounter (gắn ở tuần 1) | 0 | ≥ 200 |
-| Rating trên CWS | store listing | ___ | ≥ 5 rating, trung bình ≥ 4.5 |
+| Rating trên CWS | store listing | 0 | ≥ 5 rating, trung bình ≥ 4.5 |
 
 Mục tiêu là ước lượng thực tế cho lần launch đầu, không phải cam kết — nếu Show HN
 lên trang nhất thì vượt xa; nếu chìm thì installs chủ yếu đến từ store search (chậm mà đều).
