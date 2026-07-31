@@ -4,30 +4,17 @@
 > Bạn duyệt nội dung ở đây → AI mở PR awesome list bằng `gh`; các directory bạn tự submit
 > (cần tài khoản cá nhân), copy nguyên văn bên dưới.
 
-## 1. PR vào dzharii/awesome-elasticsearch — [AI mở sau khi bạn duyệt]
+## 1. ~~PR vào dzharii/awesome-elasticsearch~~ — HỦY
 
-- **Vị trí:** section "Elasticsearch plugins" → subsection **Cluster** (nơi có
-  elasticsearch-head, Cerebro, Elastic HQ).
-- **Dòng thêm** (đúng format của list):
-
-  ```markdown
-  [totanvix/elasticvix](https://github.com/totanvix/elasticvix) - Elasticvix is a free open source (MIT) Chrome extension: an Elasticsearch client with a query console, autocomplete that suggests real field names and values from your cluster, a visual search UI, saved queries and multi-cluster support. ES 6.x-9.x
-  ```
-
-- **PR title:** `Add Elasticvix to Cluster tools`
-- **PR body:**
-
-  ```
-  Adds Elasticvix, a free open-source (MIT) Chrome extension Elasticsearch client.
-
-  Notable vs existing entries: its autocomplete reads the index mappings of the
-  connected cluster and suggests real field names and keyword-field values while
-  writing Query DSL, and it lints fields that don't exist in the mapping before
-  the query runs. Runs entirely in the browser — no server component.
-
-  - Source: https://github.com/totanvix/elasticvix
-  - Chrome Web Store: https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad
-  ```
+- Repo đã bị archive ngày 2025-05-08, read-only, không nhận PR. Các fork (DrizzleRisk/...)
+  đều stale, không có SEO value — không đáng PR.
+- **Thay thế:**
+  - GitHub topic pages đã phủ (topics `elasticsearch-gui`, `elasticsearch-client` gắn ngày
+    2026-07-31) — đây chính là nơi Elasticvue được tìm thấy trên GitHub.
+  - LibHunt (mục 4b dưới) — index theo topic, submit được.
+  - [Tùy chọn, Bạn] email tác giả các listicle "best elasticsearch gui" đang rank trang 1
+    (1bench.dev, geekfun.club, uibakery.io) đề nghị thêm Elasticvix — 1 email ngắn kèm
+    link store + GitHub. Không bắt buộc, làm khi rảnh.
 
 ## 2. AlternativeTo — [Bạn submit tại alternativeto.net/manage-item/]
 
@@ -60,6 +47,11 @@
 - **Tagline:** Elasticsearch client & GUI in your browser
 - **Description:** dùng lại Full description của AlternativeTo ở trên.
 - **Categories:** Developer Tools, Database Tools
+
+## 4b. LibHunt — [Bạn submit tại libhunt.com (Suggest a project)]
+
+- Submit bằng link GitHub repo: https://github.com/totanvix/elasticvix
+- LibHunt tự kéo description + topics từ GitHub (topics đã gắn xong).
 
 ## Ghi chú
 
