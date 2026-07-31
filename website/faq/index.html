@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-16JEGYS1N0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-16JEGYS1N0');
+  </script>
+  <title>Elasticvix FAQ — Security, Permissions, and Compatibility</title>
+  <meta name="description" content="Where credentials are stored, why the extension needs host permissions, which Elasticsearch versions work, CORS, and how Elasticvix compares to other tools.">
+  <link rel="canonical" href="https://totanvix.github.io/elasticvix/faq/">
+  <meta property="og:title" content="Elasticvix FAQ">
+  <meta property="og:description" content="Security, permissions, Elasticsearch compatibility, and other common questions about the Elasticvix Chrome extension.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://totanvix.github.io/elasticvix/faq/">
+  <link rel="icon" type="image/svg+xml" href="../assets/icon.svg">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #0f172a; --muted: #475569;
+      --accent: #0f766e; --card: #f8fafc; --border: #e2e8f0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a; --fg: #e2e8f0; --muted: #94a3b8;
+        --accent: #2dd4bf; --card: #1e293b; --border: #334155;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--fg); line-height: 1.7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    a { color: var(--accent); }
+    main { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+    .home { font-size: 14px; }
+    h1 { font-size: 32px; letter-spacing: -0.02em; line-height: 1.25; margin: 16px 0 8px; }
+    .updated { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    h2 { font-size: 19px; margin: 32px 0 8px; }
+    p, ul { margin-bottom: 14px; }
+    ul { padding-left: 24px; }
+    li { margin-bottom: 6px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em;
+      background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+    footer { border-top: 1px solid var(--border); margin-top: 24px; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+    footer a { margin: 0 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="home" href="../">← Elasticvix</a>
+    <h1>Frequently Asked Questions</h1>
+    <p class="updated">Updated July 2026</p>
+
+    <h2>Where are my cluster credentials stored?</h2>
+    <p>Locally in your browser, in the extension's storage (<code>chrome.storage.local</code>) on your machine. They are sent only to the Elasticsearch clusters you configure, as auth headers on the requests you run. There is no backend, no account, and nothing is ever sent to us. The extension is open source (MIT) — you can <a href="https://github.com/totanvix/elasticvix">audit exactly what it does</a>.</p>
+
+    <h2>Why does the extension ask for access to all websites?</h2>
+    <p>The host permission (<code>http://*/*</code>, <code>https://*/*</code>) exists so the extension can connect to <em>whatever cluster URL you add</em> — a company cluster on an internal domain, <code>localhost:9200</code>, a cloud endpoint. The extension can't know your cluster's address in advance, so it must be allowed to reach arbitrary URLs. In practice it only ever sends requests to the connections you explicitly configure.</p>
+
+    <h2>Does the extension phone home or include analytics?</h2>
+    <p>No. The extension contains no analytics, no telemetry, and no tracking. Your queries, results, saved queries, and history all stay in your browser. (This website uses standard web analytics; the extension itself does not.)</p>
+
+    <h2>Which Elasticsearch versions are supported?</h2>
+    <p>Elasticsearch 6.x, 7.x, and 8.x are tested. 9.x is supported on a best-effort basis. OpenSearch is not officially supported or tested — parts may work since the search APIs overlap, but don't rely on it.</p>
+
+    <h2>Does it work with secured clusters?</h2>
+    <p>Yes. Connections support no auth, basic auth (username/password), API key, and bearer token. HTTPS clusters work, including Elastic Cloud endpoints, as long as your browser trusts the certificate — for a self-signed cert, open the cluster URL in a tab once and accept the certificate first.</p>
+
+    <h2>Do I need to configure CORS on my cluster?</h2>
+    <p>No — this is a practical advantage of the extension form factor. Web-based tools served from a website need <code>http.cors.*</code> settings enabled on the cluster before the browser will let them connect. A Chrome extension with host permissions is not subject to those cross-origin restrictions, so Elasticvix connects to a stock cluster with no config changes.</p>
+
+    <h2>Can it reach localhost or clusters on a private network?</h2>
+    <p>Yes. Everything runs in your browser, so Elasticvix can reach anything your machine can reach: <code>localhost</code>, Docker containers, clusters over a VPN, or an SSH tunnel (<code>ssh -L 9200:remote:9200</code> and connect to <code>localhost:9200</code>).</p>
+
+    <h2>How is this different from Kibana?</h2>
+    <p>Kibana is a full analytics platform that runs as a server alongside your cluster — dashboards, alerting, machine learning, and more. Elasticvix is a lightweight client for the developer workflow: connect, explore indices, write and run queries, inspect results. Nothing to install on a server, useful precisely when Kibana isn't there or is more than you need.</p>
+
+    <h2>How does it compare to Elasticvue or Cerebro?</h2>
+    <p>They're the closest tools, and both are solid. What Elasticvix focuses on is the query-writing experience: autocomplete that reads your cluster's index mappings and suggests real field names — and real values of keyword fields — as you type, plus linting that flags fields that don't exist in the mapping before you run. If you spend your time writing Query DSL, that's the difference you'll feel.</p>
+
+    <h2>Is it really free?</h2>
+    <p>Yes — free and open source under the MIT license, with no account, paid tier, or usage limits.</p>
+
+    <h2>Does it work in Edge or Firefox?</h2>
+    <p>Edge and other Chromium-based browsers can install it straight from the <a href="https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad">Chrome Web Store</a>. Firefox is not supported at the moment.</p>
+
+    <h2>I found a bug / want a feature — where do I go?</h2>
+    <p>Open an issue on <a href="https://github.com/totanvix/elasticvix/issues">GitHub</a>. Bug reports with the Elasticsearch version and a reproduction step are fixed fastest.</p>
+  </main>
+  <footer>
+    <nav>
+      <a href="../">Elasticvix</a>
+      <a href="../guides/query-elasticsearch-without-kibana/">Guide: query ES without Kibana</a>
+      <a href="../guides/view-elasticsearch-index-mapping/">Guide: view an index mapping</a>
+      <a href="https://github.com/totanvix/elasticvix">GitHub</a>
+    </nav>
+  </footer>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Where are my cluster credentials stored?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Locally in your browser, in the extension's storage on your machine. They are sent only to the Elasticsearch clusters you configure. There is no backend, no account, and nothing is ever sent to us. The extension is open source (MIT)." }
+      },
+      {
+        "@type": "Question",
+        "name": "Why does the extension ask for access to all websites?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The host permission exists so the extension can connect to whatever cluster URL you add. The extension can't know your cluster's address in advance, so it must be allowed to reach arbitrary URLs. It only sends requests to the connections you explicitly configure." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the extension phone home or include analytics?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. The extension contains no analytics, telemetry, or tracking. Queries, results, saved queries, and history all stay in your browser." }
+      },
+      {
+        "@type": "Question",
+        "name": "Which Elasticsearch versions are supported?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Elasticsearch 6.x, 7.x, and 8.x are tested. 9.x is supported on a best-effort basis. OpenSearch is not officially supported." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work with secured clusters?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Connections support no auth, basic auth, API key, and bearer token. HTTPS clusters work as long as your browser trusts the certificate." }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to configure CORS on my cluster?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. A Chrome extension with host permissions is not subject to browser cross-origin restrictions, so Elasticvix connects to a stock cluster without any http.cors configuration." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can it reach localhost or clusters on a private network?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Everything runs in your browser, so Elasticvix can reach anything your machine can reach: localhost, Docker containers, clusters over a VPN, or an SSH tunnel." }
+      },
+      {
+        "@type": "Question",
+        "name": "How is this different from Kibana?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Kibana is a full analytics platform that runs as a server alongside your cluster. Elasticvix is a lightweight client for the developer workflow: connect, explore indices, write and run queries, inspect results — with nothing to install on a server." }
+      },
+      {
+        "@type": "Question",
+        "name": "How does it compare to Elasticvue or Cerebro?",
+        "acceptedAnswer": { "@type": "Answer", "text": "They're the closest tools. Elasticvix focuses on the query-writing experience: autocomplete that reads your cluster's index mappings and suggests real field names and values as you type, plus linting that flags fields that don't exist in the mapping before you run." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it really free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — free and open source under the MIT license, with no account, paid tier, or usage limits." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work in Edge or Firefox?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Edge and other Chromium-based browsers can install it from the Chrome Web Store. Firefox is not supported at the moment." }
+      }
+    ]
+  }
+  </script>
+</body>
+</html>
