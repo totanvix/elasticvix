@@ -3,13 +3,17 @@
 > Dán từng mục vào tab **Store listing** của developer dashboard.
 > Title và Summary lấy tự động từ manifest khi upload zip — hai mục đầu chỉ để đối chiếu.
 
-## Title (từ manifest — 33/45 ký tự)
+## Title (từ manifest — 39/45 ký tự)
 
-Elasticvix - Elasticsearch Client
+Elasticvix - Elasticsearch Client & GUI
 
-## Summary (từ manifest — 124/132 ký tự)
+## Summary (từ manifest — 126/132 ký tự)
 
-Elasticsearch client with query console, field-aware autocomplete, saved queries, and multi-cluster support. For ES 6.x-9.x.
+Elasticsearch client & GUI with query console, field-aware autocomplete, saved queries, and multi-cluster support. ES 6.x-9.x.
+
+> Title/Summary lấy từ manifest → chỉ đổi khi upload zip mới (qua review lại).
+> Thêm "GUI" theo [keyword map](../research/keyword-map.md): keyword "elasticsearch gui"
+> hiện chỉ mình Elasticvue rank.
 
 ## Category
 
@@ -21,7 +25,7 @@ English
 
 ## Description (dán vào ô Description — plain text, giữ nguyên xuống dòng)
 
-Elasticvix is an Elasticsearch client that runs entirely in your browser — connect to any cluster and start querying in seconds. No server, no desktop app, no account, nothing sent to us.
+Elasticvix is an Elasticsearch client and GUI that runs entirely in your browser — a lightweight frontend for your cluster. Connect and start querying in seconds. No server, no desktop app, no account, nothing sent to us.
 
 What sets it apart: the autocomplete and linting actually read your cluster. Instead of static keyword lists, you get the real field names and real values from your own indices as you type — so you write correct queries faster and catch mistakes before you run them.
 
