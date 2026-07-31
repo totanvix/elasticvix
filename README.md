@@ -1,5 +1,9 @@
 # Elasticvix
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/glnbabapnpecmdaekagajnedgkbhcgad?label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad)
+[![Users](https://img.shields.io/chrome-web-store/users/glnbabapnpecmdaekagajnedgkbhcgad)](https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 **An Elasticsearch client that runs entirely in your browser.** Connect to any cluster and start querying in seconds — no server, no desktop app, nothing sent to us.
 
 Elasticvix is a Chrome extension (Manifest V3) built with [WXT](https://wxt.dev), React, and TypeScript. A cluster overview, a query console with field-aware autocomplete, a point-and-click search UI, saved queries, and multi-cluster support — all local.
