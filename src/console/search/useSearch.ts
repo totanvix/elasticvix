@@ -4,6 +4,7 @@ import type { EsResult } from '../../lib/rpc/messages';
 import { esRequest } from '../../lib/rpc/client';
 import { addSearchHistory } from '../../lib/storage/searchHistory';
 import { newId } from '../ids';
+import { recordEngagementRun } from '../engagement/engagementStore';
 import { buildSearchPath, mergeFromSize, normalizeTotal, type TotalInfo } from './searchLib';
 
 export const DEFAULT_QUERY = '{\n  "query": {\n    "match_all": {}\n  }\n}';
@@ -115,6 +116,7 @@ export function useSearch(active: Connection | undefined) {
             ranAt: Date.now(),
           });
           setRanAt((n) => n + 1);
+          recordEngagementRun();
         }
       } catch (e) {
         // Transport-level failure (e.g. the background service worker restarted

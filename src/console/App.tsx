@@ -13,6 +13,7 @@ import { HistoryPanel } from './library/HistoryPanel';
 import { TopNav, type ConsoleView } from './nav/TopNav';
 import { SearchPage } from './search/SearchPage';
 import { ClusterPage } from './cluster/ClusterPage';
+import { EngagementNudge } from './engagement/EngagementNudge';
 
 const VIEW_KEY = 'elasticvix.view';
 
@@ -99,6 +100,7 @@ function ConsoleInner() {
         onOpenChange={setSaveOpen}
         onSaved={() => setSavedReloadKey((k) => k + 1)}
       />
+      <EngagementNudge />
     </>
   );
 }

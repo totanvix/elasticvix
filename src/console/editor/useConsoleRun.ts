@@ -5,6 +5,7 @@ import { esRequest } from '../../lib/rpc/client';
 import { parseRequestLine } from '../../lib/autocomplete/requestLine';
 import { addHistory } from '../../lib/storage/history';
 import { newId } from '../ids';
+import { recordEngagementRun } from '../engagement/engagementStore';
 
 const DEFAULT_TEXT = 'GET /_search\n{\n  "query": {\n    "match_all": {}\n  }\n}';
 
@@ -44,6 +45,7 @@ export function useConsoleRun(active: Connection | undefined) {
       };
       await addHistory(entry);
       setRanAt((n) => n + 1);
+      recordEngagementRun();
     } finally {
       setRunning(false);
     }
