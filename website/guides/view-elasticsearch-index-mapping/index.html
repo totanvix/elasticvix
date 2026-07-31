@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to View an Elasticsearch Index Mapping (and Actually Read It)</title>
+  <meta name="description" content="Get an Elasticsearch index mapping with the _mapping API, read the JSON structure, understand text vs keyword fields, and browse mappings visually in your browser.">
+  <link rel="canonical" href="https://totanvix.github.io/elasticvix/guides/view-elasticsearch-index-mapping/">
+  <meta property="og:title" content="How to View an Elasticsearch Index Mapping">
+  <meta property="og:description" content="The _mapping API, how to read its JSON, text vs keyword explained, and a faster way to browse fields in your browser.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://totanvix.github.io/elasticvix/guides/view-elasticsearch-index-mapping/">
+  <link rel="icon" type="image/svg+xml" href="../../assets/icon.svg">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #0f172a; --muted: #475569;
+      --accent: #0f766e; --card: #f8fafc; --border: #e2e8f0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a; --fg: #e2e8f0; --muted: #94a3b8;
+        --accent: #2dd4bf; --card: #1e293b; --border: #334155;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--fg); line-height: 1.7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    a { color: var(--accent); }
+    main { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+    .home { font-size: 14px; }
+    h1 { font-size: 32px; letter-spacing: -0.02em; line-height: 1.25; margin: 16px 0 8px; }
+    .updated { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    h2 { font-size: 22px; margin: 40px 0 12px; }
+    p, ul, ol { margin-bottom: 16px; }
+    ul, ol { padding-left: 24px; }
+    li { margin-bottom: 6px; }
+    pre {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px; overflow-x: auto; font-size: 14px; margin-bottom: 16px;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    p code, li code { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+    .callout {
+      background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+      border-radius: 10px; padding: 16px 20px; margin: 24px 0;
+    }
+    img.shot { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; display: block; margin: 16px 0; }
+    footer { border-top: 1px solid var(--border); margin-top: 24px; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+    footer a { margin: 0 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="home" href="../../">← Elasticvix</a>
+    <h1>How to View an Elasticsearch Index Mapping (and Actually Read It)</h1>
+    <p class="updated">Updated July 2026 · Works with Elasticsearch 6.x–9.x</p>
+
+    <p>The mapping is the schema of an Elasticsearch index: every field, its type, and how it's analyzed. You need it constantly — to know whether a field is <code>text</code> or <code>keyword</code>, to find out why a query returns nothing, or just to see what's actually in an index someone else created. Here's how to get it, how to read it, and a faster way to browse it.</p>
+
+    <h2>Getting the mapping with the API</h2>
+    <pre><code># Mapping of one index
+curl -s "http://localhost:9200/products/_mapping?pretty"
+
+# Mappings of several indices, or a pattern
+curl -s "http://localhost:9200/logs-*/_mapping?pretty"
+
+# Every index on the cluster (can be huge)
+curl -s "http://localhost:9200/_mapping?pretty"</code></pre>
+    <p>On a secured cluster add <code>-u user:password</code> or an API-key header, same as any other request. If the response is overwhelming, <code>filter_path</code> trims it down — for example, just the field names and types:</p>
+    <pre><code>curl -s "http://localhost:9200/products/_mapping?pretty&filter_path=*.mappings.properties.*.type"</code></pre>
+
+    <h2>Reading the JSON</h2>
+    <p>A mapping response looks like this:</p>
+    <pre><code>{
+  "products": {
+    "mappings": {
+      "properties": {
+        "name":     { "type": "text",
+                      "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } },
+        "price":    { "type": "float" },
+        "in_stock": { "type": "boolean" },
+        "brand":    { "type": "keyword" },
+        "specs":    { "properties": {
+                        "weight_g": { "type": "integer" },
+                        "color":    { "type": "keyword" } } }
+      }
+    }
+  }
+}</code></pre>
+    <p>The rules for reading it:</p>
+    <ul>
+      <li><strong><code>properties</code> holds the fields.</strong> A field with its own nested <code>properties</code> (like <code>specs</code>) is an object — its subfields are queried with dot notation: <code>specs.color</code>.</li>
+      <li><strong><code>text</code> vs <code>keyword</code> is the distinction that matters most.</strong> <code>text</code> is analyzed for full-text search (<code>match</code> queries); <code>keyword</code> is stored as an exact value for filtering, sorting, and aggregations (<code>term</code> queries). Using <code>term</code> on a <code>text</code> field is the classic reason a query that "should" match returns nothing.</li>
+      <li><strong>The <code>fields</code> block means a multi-field.</strong> Above, <code>name</code> is <code>text</code>, and <code>name.keyword</code> is an exact-value copy — use <code>name</code> for search, <code>name.keyword</code> to sort or aggregate.</li>
+      <li><strong>Dynamic mapping fills in what you didn't define.</strong> If you never wrote a mapping, Elasticsearch guessed types from the first document — worth checking, because a numeric string like <code>"123"</code> becomes <code>text</code>, not a number.</li>
+    </ul>
+
+    <h2>The pain: real mappings are huge</h2>
+    <p>The example above is 5 fields. A real logs or product index easily has hundreds, nested several levels deep, and answering a simple question — "do we have a field called <code>customer_id</code>, and is it a keyword?" — means scrolling a wall of JSON and mentally joining dotted paths.</p>
+    <p><a href="../../">Elasticvix</a>, a free open-source Chrome extension, shows any index's mapping as a searchable <strong>field → type table</strong> instead: every field flattened to its full dotted path, with a filter box on top. Type <code>customer</code>, see every matching field and its type instantly. The same mapping also powers the extension's query console — autocomplete suggests your real field names as you type, and linting flags a field that isn't in the mapping before the query runs.</p>
+    <div class="callout">
+      <p style="margin-bottom: 0"><strong>Try it:</strong> install <a href="https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad">Elasticvix from the Chrome Web Store</a>, connect your cluster, open the Search view and pick an index — the mapping table is one click away. Nothing leaves your browser except the requests to your own cluster.</p>
+    </div>
+
+    <h2>Quick reference</h2>
+    <ul>
+      <li>One index: <code>GET /index/_mapping</code></li>
+      <li>All indices: <code>GET /_mapping</code></li>
+      <li>Only types: add <code>?filter_path=*.mappings.properties.*.type</code></li>
+      <li>Full-text field: <code>text</code> · exact/filter/sort/agg field: <code>keyword</code></li>
+      <li>Multi-field: query <code>name</code> for search, <code>name.keyword</code> for exact</li>
+    </ul>
+  </main>
+  <footer>
+    <nav>
+      <a href="../../">Elasticvix</a>
+      <a href="../query-elasticsearch-without-kibana/">Guide: query ES without Kibana</a>
+      <a href="https://github.com/totanvix/elasticvix">GitHub</a>
+    </nav>
+  </footer>
+</body>
+</html>

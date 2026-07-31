@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to Query Elasticsearch Without Kibana (curl, URI search, or a browser GUI)</title>
+  <meta name="description" content="Three practical ways to query an Elasticsearch cluster when Kibana isn't installed: curl with Query DSL, quick URI searches, and a browser-based GUI.">
+  <link rel="canonical" href="https://totanvix.github.io/elasticvix/guides/query-elasticsearch-without-kibana/">
+  <meta property="og:title" content="How to Query Elasticsearch Without Kibana">
+  <meta property="og:description" content="curl with Query DSL, quick URI searches, and a browser-based GUI — three ways to query a cluster with no Kibana installed.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://totanvix.github.io/elasticvix/guides/query-elasticsearch-without-kibana/">
+  <link rel="icon" type="image/svg+xml" href="../../assets/icon.svg">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #0f172a; --muted: #475569;
+      --accent: #0f766e; --card: #f8fafc; --border: #e2e8f0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a; --fg: #e2e8f0; --muted: #94a3b8;
+        --accent: #2dd4bf; --card: #1e293b; --border: #334155;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--fg); line-height: 1.7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    a { color: var(--accent); }
+    main { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+    .home { font-size: 14px; }
+    h1 { font-size: 32px; letter-spacing: -0.02em; line-height: 1.25; margin: 16px 0 8px; }
+    .updated { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    h2 { font-size: 22px; margin: 40px 0 12px; }
+    p, ul, ol { margin-bottom: 16px; }
+    ul, ol { padding-left: 24px; }
+    li { margin-bottom: 6px; }
+    pre {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px; overflow-x: auto; font-size: 14px; margin-bottom: 16px;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+    p code, li code { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+    .callout {
+      background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+      border-radius: 10px; padding: 16px 20px; margin: 24px 0;
+    }
+    footer { border-top: 1px solid var(--border); margin-top: 24px; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+    footer a { margin: 0 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="home" href="../../">← Elasticvix</a>
+    <h1>How to Query Elasticsearch Without Kibana</h1>
+    <p class="updated">Updated July 2026 · Works with Elasticsearch 6.x–9.x</p>
+
+    <p>Kibana is the default answer for talking to Elasticsearch, but plenty of clusters run without it: a production cluster where only Elasticsearch is exposed, a staging box someone set up years ago, a local Docker container you spun up for one test. The good news — Elasticsearch is just an HTTP API. Here are three practical ways to query it directly, from quickest to most comfortable.</p>
+
+    <h2>Option 1: curl with Query DSL</h2>
+    <p>Everything Kibana's Dev Tools does is a plain HTTP request underneath. A full-text search against an index called <code>products</code>:</p>
+    <pre><code>curl -s -X POST "http://localhost:9200/products/_search?pretty" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": {
+      "match": { "name": "wireless headphones" }
+    },
+    "size": 10
+  }'</code></pre>
+    <p>Three details that trip people up:</p>
+    <ul>
+      <li><strong>The <code>Content-Type</code> header is required.</strong> Without it Elasticsearch returns <code>406 Content-Type header is missing</code>.</li>
+      <li><strong>Authentication.</strong> Secured clusters need <code>-u user:password</code> (basic auth) or an <code>Authorization: ApiKey …</code> / <code>Authorization: Bearer …</code> header.</li>
+      <li><strong>Self-signed TLS.</strong> Elasticsearch 8+ ships with HTTPS on by default; for a local cluster with a self-signed certificate add <code>-k</code> (or better, pass the CA with <code>--cacert</code>).</li>
+    </ul>
+    <p>A few requests you'll reach for constantly:</p>
+    <pre><code># What indices exist, sorted by size
+curl -s "http://localhost:9200/_cat/indices?v&s=store.size:desc"
+
+# Cluster health
+curl -s "http://localhost:9200/_cluster/health?pretty"
+
+# The last 5 documents that match a filter
+curl -s -X POST "http://localhost:9200/logs-*/_search?pretty" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": { "term": { "level": "error" } },
+    "sort": [{ "@timestamp": "desc" }],
+    "size": 5
+  }'</code></pre>
+
+    <h2>Option 2: URI search for quick checks</h2>
+    <p>For a fast "is my data there?" check you can skip the request body entirely and put a Lucene query string in the URL:</p>
+    <pre><code>curl -s "http://localhost:9200/products/_search?q=name:headphones&size=5&pretty"</code></pre>
+    <p>URI search supports field names (<code>q=status:active</code>), booleans (<code>q=status:active+AND+price:[100+TO+200]</code>), and wildcards. It's great for one-liners and terrible for anything complex — quoting, URL-encoding, and operator precedence get painful quickly. When a query needs more than one condition, switch back to a JSON body.</p>
+
+    <h2>Option 3: a GUI in your browser</h2>
+    <p>curl works, but writing Query DSL by hand in a terminal has real friction: no autocomplete, no formatting, mistyped field names silently return zero hits, and long JSON responses are hard to scan.</p>
+    <p>A browser-based Elasticsearch GUI fixes that without installing a server or desktop app. <a href="../../">Elasticvix</a> is a free, open-source (MIT) Chrome extension that connects straight from your browser to any cluster you can reach — nothing is sent anywhere else. What it adds over the terminal:</p>
+    <ul>
+      <li><strong>Autocomplete that reads your cluster</strong> — it suggests your real field names from the index mapping, and even real values of keyword fields, not just static Query DSL keywords.</li>
+      <li><strong>Field linting</strong> — a field that doesn't exist in the mapping gets flagged <em>before</em> you run, which kills the classic silent-zero-hits bug.</li>
+      <li><strong>A response viewer built for big JSON</strong> — fold nodes, filter to the paths you care about, download the result.</li>
+      <li><strong>Saved queries and history</strong>, so the query you crafted last Tuesday is still there.</li>
+    </ul>
+    <div class="callout">
+      <p style="margin-bottom: 8px"><strong>Try it:</strong> install <a href="https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad">Elasticvix from the Chrome Web Store</a>, add your cluster URL (with basic auth, API key, or bearer token if needed), and you're querying in under a minute.</p>
+      <p style="margin-bottom: 0">Other tools in this space include Elasticvue and Cerebro — any of them beats hand-writing curl for daily work.</p>
+    </div>
+
+    <h2>Which one should you use?</h2>
+    <ul>
+      <li><strong>One-off check from a server you're SSH'd into:</strong> curl or URI search.</li>
+      <li><strong>Scripting and automation:</strong> curl (or a client library in your language).</li>
+      <li><strong>Daily exploration, debugging, and query writing:</strong> a GUI — the autocomplete and readable responses pay for themselves within the first session.</li>
+    </ul>
+  </main>
+  <footer>
+    <nav>
+      <a href="../../">Elasticvix</a>
+      <a href="../view-elasticsearch-index-mapping/">Guide: view an index mapping</a>
+      <a href="https://github.com/totanvix/elasticvix">GitHub</a>
+    </nav>
+  </footer>
+</body>
+</html>
