@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react';
+import { CircleHelp, Moon, Sun } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useTheme } from '../theme';
 import type { Connection } from '../../lib/types';
@@ -19,6 +19,8 @@ type Props = {
   onDelete: (id: string) => void;
   onTest: (conn: Connection) => Promise<TestResult>;
 };
+
+const WEBSITE_URL = 'https://totanvix.github.io/elasticvix/';
 
 const NAV_ITEMS: { view: ConsoleView; label: string }[] = [
   { view: 'cluster', label: 'CLUSTER' },
@@ -71,6 +73,17 @@ export function TopNav({ view, onViewChange, connections, active, onSelect, onSa
           </button>
         ))}
       </nav>
+      <Button variant="ghost" size="icon" asChild>
+        <a
+          href={WEBSITE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open the Elasticvix website"
+          title="Website — guides & FAQ"
+        >
+          <CircleHelp />
+        </a>
+      </Button>
       <ThemeToggle />
     </>
   );
