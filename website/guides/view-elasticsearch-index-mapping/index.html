@@ -56,8 +56,22 @@
       border-radius: 10px; padding: 16px 20px; margin: 24px 0;
     }
     img.shot { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; display: block; margin: 16px 0; }
-    footer { border-top: 1px solid var(--border); margin-top: 24px; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
-    footer a { margin: 0 8px; }
+    footer { border-top: 1px solid var(--border); margin-top: 24px; font-size: 14px; }
+    .footer-wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    .footer-grid { display: grid; grid-template-columns: 2.2fr 1fr 1.1fr 1fr; gap: 40px; padding: 48px 0 40px; }
+    .footer-logo { display: inline-flex; align-items: center; gap: 10px; color: var(--fg); font-weight: 600; font-size: 16px; text-decoration: none; }
+    .footer-logo svg { border-radius: 8px; }
+    .footer-brand p { color: var(--muted); margin: 12px 0 0; max-width: 300px; }
+    .footer-col h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg); margin: 0 0 14px; }
+    .footer-col a { display: block; color: var(--muted); text-decoration: none; margin: 0 0 10px; }
+    .footer-col a:hover { color: var(--accent); text-decoration: underline; }
+    .footer-bottom { border-top: 1px solid var(--border); }
+    .footer-bottom-inner { display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; padding: 18px 0; color: var(--muted); font-size: 13px; }
+    .footer-bottom-inner p { margin: 0; }
+    @media (max-width: 760px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+      .footer-brand { grid-column: 1 / -1; }
+    }
   </style>
 </head>
 <body>
@@ -123,12 +137,43 @@ curl -s "http://localhost:9200/_mapping?pretty"</code></pre>
     </ul>
   </main>
   <footer>
-    <nav>
-      <a href="../../">Elasticvix</a>
-      <a href="../query-elasticsearch-without-kibana/">Guide: query ES without Kibana</a>
-      <a href="../../faq/">FAQ</a>
-      <a href="https://github.com/totanvix/elasticvix">GitHub</a>
-    </nav>
+    <div class="footer-wrap footer-grid">
+      <div class="footer-brand">
+        <a class="footer-logo" href="../../">
+          <svg width="28" height="28" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="128" height="128" rx="28" fill="#0F172A"/>
+            <rect x="28" y="30" width="72" height="16" rx="8" fill="#14B8A6"/>
+            <rect x="28" y="56" width="52" height="16" rx="8" fill="#FACC15"/>
+            <rect x="28" y="82" width="72" height="16" rx="8" fill="#F472B6"/>
+          </svg>
+          Elasticvix
+        </a>
+        <p>An Elasticsearch client &amp; GUI that runs entirely in your browser. Free and open source.</p>
+      </div>
+      <nav class="footer-col" aria-label="Product">
+        <h2>Product</h2>
+        <a href="https://chromewebstore.google.com/detail/elasticvix-elasticsearch/glnbabapnpecmdaekagajnedgkbhcgad">Add to Chrome</a>
+        <a href="https://github.com/totanvix/elasticvix">Source on GitHub</a>
+        <a href="https://github.com/totanvix/elasticvix/issues">Report an issue</a>
+      </nav>
+      <nav class="footer-col" aria-label="Resources">
+        <h2>Resources</h2>
+        <a href="../../guides/query-elasticsearch-without-kibana/">Query ES without Kibana</a>
+        <a href="../../guides/view-elasticsearch-index-mapping/">View an index mapping</a>
+        <a href="../../faq/">FAQ</a>
+      </nav>
+      <nav class="footer-col" aria-label="Legal">
+        <h2>Legal</h2>
+        <a href="../../privacy-policy/">Privacy Policy</a>
+        <a href="https://github.com/totanvix/elasticvix/blob/main/LICENSE">MIT License</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-wrap footer-bottom-inner">
+        <p>© 2026 Elasticvix</p>
+        <p>Elasticsearch is a trademark of Elasticsearch B.V. Elasticvix is an independent project, not affiliated with Elastic.</p>
+      </div>
+    </div>
   </footer>
 </body>
 </html>
