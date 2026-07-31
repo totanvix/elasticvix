@@ -43,7 +43,7 @@ export function MappingDialog({ connection, index, onClose }: Props) {
         }
       }}
     >
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate font-mono">{index}</span>
@@ -84,11 +84,11 @@ export function MappingDialog({ connection, index, onClose }: Props) {
               {fields.length === 0 ? 'No fields.' : 'No fields match the filter.'}
             </p>
           ) : (
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead>
                 <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-3 py-2 text-left font-medium">Field</th>
-                  <th className="px-3 py-2 text-left font-medium">Type</th>
+                  <th className="w-28 px-3 py-2 text-left font-medium">Type</th>
                 </tr>
               </thead>
               <tbody>
@@ -96,7 +96,7 @@ export function MappingDialog({ connection, index, onClose }: Props) {
                   const { parent, leaf } = splitPath(f.path);
                   return (
                     <tr key={f.path} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="px-3 py-1.5 font-mono text-xs">
+                      <td className="px-3 py-1.5 font-mono text-xs [overflow-wrap:anywhere]">
                         <span className="text-muted-foreground">{parent}</span>
                         {leaf}
                       </td>
