@@ -33,7 +33,7 @@ export function EngagementNudge() {
       </p>
       <div className="mt-3 flex items-center gap-2">
         <Button asChild size="sm">
-          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" onClick={dismissEngagement}>
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" onClick={snoozeEngagement}>
             <Star /> Star on GitHub
           </a>
         </Button>
