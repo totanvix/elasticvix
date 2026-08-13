@@ -1,13 +1,12 @@
-import { useState } from 'react';
-import { CircleHelp, DatabaseBackup, Moon, Sun } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useTheme } from '../theme';
+import { useEffect, useState } from 'react';
 import type { Connection } from '../../lib/types';
 import { ClusterSelector } from '../connections/ClusterSelector';
-import { SettingsDialog } from '../settings/SettingsDialog';
+import { SettingsMenu } from '../settings/SettingsMenu';
 import { ConnectionStatusChip } from '../connections/ConnectionStatusChip';
 import { useConnectionStatus } from '../connections/useConnectionStatus';
 import type { TestResult } from '../connections/useConnections';
+import { WhatsNewDialog } from '../changelog/WhatsNewDialog';
+import { hasUnseenRelease, loadLastSeenVersion, saveLastSeenVersion, seedLastSeenVersion } from '../changelog/changelogLib';
 
 export type ConsoleView = 'cluster' | 'search' | 'rest';
 
@@ -22,26 +21,35 @@ type Props = {
   onTest: (conn: Connection) => Promise<TestResult>;
 };
 
-const WEBSITE_URL = 'https://totanvix.github.io/elasticvix/';
-
 const NAV_ITEMS: { view: ConsoleView; label: string }[] = [
   { view: 'cluster', label: 'CLUSTER' },
   { view: 'search', label: 'SEARCH' },
   { view: 'rest', label: 'REST' },
 ];
 
-function ThemeToggle() {
-  const { theme, toggle } = useTheme();
-  return (
-    <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
-      {theme === 'dark' ? <Sun /> : <Moon />}
-    </Button>
-  );
-}
-
 export function TopNav({ view, onViewChange, connections, active, onSelect, onSave, onDelete, onTest }: Props) {
   const status = useConnectionStatus(active);
-  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  // Read inside the component: fakeBrowser throws on getManifest, so a module-scope
+  // call would break any test that pulls this file into its module graph.
+  const version = browser.runtime.getManifest().version;
+  const [lastSeen, setLastSeen] = useState(loadLastSeenVersion);
+  const [isWhatsNewOpen, setWhatsNewOpen] = useState(false);
+
+  useEffect(() => {
+    if (loadLastSeenVersion() === null) {
+      seedLastSeenVersion(version);
+      setLastSeen(version);
+    }
+  }, [version]);
+
+  const hasUnread = hasUnseenRelease(lastSeen, version);
+
+  const openWhatsNew = () => {
+    saveLastSeenVersion(version);
+    setLastSeen(version);
+    setWhatsNewOpen(true);
+  };
+
   return (
     <>
       <span className="text-lg font-semibold">Elasticvix</span>
@@ -76,32 +84,13 @@ export function TopNav({ view, onViewChange, connections, active, onSelect, onSa
           </button>
         ))}
       </nav>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Backup and restore"
-        title="Backup & restore"
-        onClick={() => setSettingsOpen(true)}
-      >
-        <DatabaseBackup />
-      </Button>
-      <ThemeToggle />
-      <Button variant="ghost" size="icon" asChild>
-        <a
-          href={WEBSITE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open the Elasticvix website"
-          title="Website — guides & FAQ"
-        >
-          <CircleHelp />
-        </a>
-      </Button>
-      {isSettingsOpen && (
-        <SettingsDialog
+      <SettingsMenu onWhatsNew={openWhatsNew} hasUnseenRelease={hasUnread} />
+      {isWhatsNewOpen && (
+        <WhatsNewDialog
           isOpen
+          version={version}
           onOpenChange={(open) => {
-            if (!open) setSettingsOpen(false);
+            if (!open) setWhatsNewOpen(false);
           }}
         />
       )}

@@ -40,3 +40,10 @@
 - Nếu bị reject vì quyền rộng: phương án B là chuyển sang `optional_host_permissions`
   xin động theo thiết kế trong `docs/superpowers/specs/2026-07-07-vixelastic-query-console-design.md`.
 - Được duyệt → kiểm tra listing công khai, cài từ store và smoke test lại một lần.
+
+## E. Mỗi lần phát hành bản mới
+
+- Thêm entry cho version sắp phát hành vào `src/console/changelog/releases.ts` và commit
+  **trước** khi chạy `pnpm release`. `pnpm version patch` tự tạo commit tag, nên entry thêm sau
+  sẽ nằm ngoài tag đó. Nội dung viết bằng tiếng Anh, mô tả lợi ích cho người dùng.
+- Sau đó: `pnpm compile && pnpm test` → `pnpm release` → `pnpm zip` → upload bản zip lên dashboard.
