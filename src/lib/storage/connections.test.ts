@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
-import { listConnections, saveConnection, deleteConnection, getActiveConnectionId, setActiveConnectionId } from './connections';
+import { listConnections, saveConnection, saveConnections, deleteConnection, getActiveConnectionId, setActiveConnectionId } from './connections';
 import type { Connection } from '../types';
 
 const conn = (id: string): Connection => ({
@@ -26,6 +26,11 @@ describe('connections storage', () => {
     await saveConnection(conn('a'));
     await deleteConnection('a');
     expect(await listConnections()).toEqual([]);
+  });
+  it('replaces the whole list with saveConnections', async () => {
+    await saveConnection(conn('a'));
+    await saveConnections([conn('b'), conn('c')]);
+    expect((await listConnections()).map((c) => c.id)).toEqual(['b', 'c']);
   });
   it('tracks the active connection id', async () => {
     await setActiveConnectionId('a');

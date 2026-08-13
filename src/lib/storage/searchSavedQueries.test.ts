@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   putSearchSavedQuery,
+  putSearchSavedQueries,
   listSearchSavedQueries,
   deleteSearchSavedQuery,
   searchSearchSavedQueries,
@@ -24,6 +25,12 @@ describe('search saved queries repo', () => {
     await putSearchSavedQuery(q('1', 'a', []));
     await deleteSearchSavedQuery('1');
     expect(await listSearchSavedQueries()).toHaveLength(0);
+  });
+  it('bulk-puts: inserts new and overwrites existing in one call', async () => {
+    await putSearchSavedQuery(q('1', 'old', []));
+    await putSearchSavedQueries([q('1', 'new', []), q('2', 'b', [])]);
+    const all = await listSearchSavedQueries();
+    expect(all.map((x) => `${x.id}:${x.name}`).sort()).toEqual(['1:new', '2:b']);
   });
   it('filters by tag', async () => {
     await putSearchSavedQuery(q('1', 'a', ['prod']));

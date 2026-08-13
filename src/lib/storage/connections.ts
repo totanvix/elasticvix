@@ -15,6 +15,10 @@ export async function saveConnection(c: Connection): Promise<void> {
   await browser.storage.local.set({ [CONNECTIONS_KEY]: next });
 }
 
+export async function saveConnections(list: Connection[]): Promise<void> {
+  await browser.storage.local.set({ [CONNECTIONS_KEY]: list });
+}
+
 export async function deleteConnection(id: string): Promise<void> {
   const next = (await listConnections()).filter((x) => x.id !== id);
   await browser.storage.local.set({ [CONNECTIONS_KEY]: next });

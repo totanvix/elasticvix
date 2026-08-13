@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { putSavedQuery, listSavedQueries, deleteSavedQuery, searchSavedQueries } from './savedQueries';
+import { putSavedQuery, putSavedQueries, listSavedQueries, deleteSavedQuery, searchSavedQueries } from './savedQueries';
 import type { SavedQuery } from '../types';
 
 const q = (id: string, name: string, tags: string[]): SavedQuery => ({
@@ -14,6 +14,12 @@ describe('saved queries repo', () => {
   it('stores and lists', async () => {
     await putSavedQuery(q('1', 'prod errors', ['prod']));
     expect((await listSavedQueries()).map((x) => x.id)).toEqual(['1']);
+  });
+  it('bulk-puts: inserts new and overwrites existing in one call', async () => {
+    await putSavedQuery(q('1', 'old', []));
+    await putSavedQueries([q('1', 'new', []), q('2', 'b', [])]);
+    const all = await listSavedQueries();
+    expect(all.map((x) => `${x.id}:${x.name}`).sort()).toEqual(['1:new', '2:b']);
   });
   it('filters by tag', async () => {
     await putSavedQuery(q('1', 'a', ['prod']));

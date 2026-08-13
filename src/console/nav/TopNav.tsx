@@ -1,8 +1,10 @@
-import { CircleHelp, Moon, Sun } from 'lucide-react';
+import { useState } from 'react';
+import { CircleHelp, DatabaseBackup, Moon, Sun } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useTheme } from '../theme';
 import type { Connection } from '../../lib/types';
 import { ClusterSelector } from '../connections/ClusterSelector';
+import { SettingsDialog } from '../settings/SettingsDialog';
 import { ConnectionStatusChip } from '../connections/ConnectionStatusChip';
 import { useConnectionStatus } from '../connections/useConnectionStatus';
 import type { TestResult } from '../connections/useConnections';
@@ -39,6 +41,7 @@ function ThemeToggle() {
 
 export function TopNav({ view, onViewChange, connections, active, onSelect, onSave, onDelete, onTest }: Props) {
   const status = useConnectionStatus(active);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
   return (
     <>
       <span className="text-lg font-semibold">Elasticvix</span>
@@ -73,6 +76,16 @@ export function TopNav({ view, onViewChange, connections, active, onSelect, onSa
           </button>
         ))}
       </nav>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Backup and restore"
+        title="Backup & restore"
+        onClick={() => setSettingsOpen(true)}
+      >
+        <DatabaseBackup />
+      </Button>
+      <ThemeToggle />
       <Button variant="ghost" size="icon" asChild>
         <a
           href={WEBSITE_URL}
@@ -84,7 +97,14 @@ export function TopNav({ view, onViewChange, connections, active, onSelect, onSa
           <CircleHelp />
         </a>
       </Button>
-      <ThemeToggle />
+      {isSettingsOpen && (
+        <SettingsDialog
+          isOpen
+          onOpenChange={(open) => {
+            if (!open) setSettingsOpen(false);
+          }}
+        />
+      )}
     </>
   );
 }

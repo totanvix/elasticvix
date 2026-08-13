@@ -5,6 +5,11 @@ export async function putSavedQuery(q: SavedQuery): Promise<void> {
   await (await getDb()).put('savedQueries', q);
 }
 
+export async function putSavedQueries(qs: SavedQuery[]): Promise<void> {
+  const tx = (await getDb()).transaction('savedQueries', 'readwrite');
+  await Promise.all([...qs.map((q) => tx.store.put(q)), tx.done]);
+}
+
 export async function deleteSavedQuery(id: string): Promise<void> {
   await (await getDb()).delete('savedQueries', id);
 }

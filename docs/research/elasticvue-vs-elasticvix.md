@@ -8,7 +8,7 @@
 
 ## Trạng thái build
 
-> Cập nhật 2026-07-30. Đánh dấu tiến độ so với đề xuất ban đầu (🟢 đã build · ⚪ chưa). Chi tiết ở từng mục bên dưới.
+> Cập nhật 2026-08-13. Đánh dấu tiến độ so với đề xuất ban đầu (🟢 đã build · ⚪ chưa). Chi tiết ở từng mục bên dưới.
 
 **🟢 Đã build**
 - **§1.2 Mappings viewer** — bảng field → type có search (`MappingDialog`).
@@ -18,10 +18,10 @@
 - **§2.5 Lint query trước khi gửi** — cảnh báo field không có trong mapping (`@codemirror/lint`, có toggle bật/tắt).
 - **§2.5 Search/filter trong response** — chính là filter-by-path ở §1.5.
 - **§1.9 Cluster overview** — **tab CLUSTER** (view mặc định): health + version + summary cards + **bảng per-node RAM/heap/disk/CPU** (`_cluster/health` + `GET /` + `_cluster/stats` + `_cat/nodes`). Làm dạng tab per-node thay vì popover "bản nhẹ" ban đầu.
+- **§1.3 Export/import config** — dialog Backup & restore trên TopNav: export connections + saved queries ra JSON (checkbox include credentials, mặc định tắt), import merge theo id (`src/lib/storage/backup.ts`).
 
 **⚪ Chưa build**
 - **§1.1 Bulk delete** (checkbox nhiều dòng) — cố tình để lại làm follow-up.
-- **§1.3 Export/import config** — backup/restore connections + saved queries.
 - **§1.4 Multi-request console** kiểu Kibana.
 - **§2.1 Mở rộng spec.json** — vẫn ~8 query types gốc; thiếu `wildcard/prefix/fuzzy/multi_match/date_histogram...`.
 - **§2.5 Diff 2 response** (cần multi-request console).
@@ -43,7 +43,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 |---|---|---|---|
 | Document | Sửa document inline, xoá document (đơn + bulk) | ✅ Nên thêm | 🟢 Đơn xong · ⚪ bulk |
 | Index | Mappings viewer (xem info/mapping của index) | ✅ Nên thêm | 🟢 Xong |
-| App | Export/import config (backup JSON) | ✅ Nên thêm | ⚪ Chưa |
+| App | Export/import config (backup JSON) | ✅ Nên thêm | 🟢 Xong |
 | REST | Multi-tab / nhiều request | ✅ Nên thêm (kiểu Kibana) | ⚪ Chưa |
 | REST | Fold/expand response, download response | ✅ Nên thêm | 🟢 Xong (+ filter) |
 | Index | Hành động quản trị index (create, delete, refresh, flush...) | ⚠️ Cân nhắc (bản tối giản) | ⚪ Chưa |
@@ -69,7 +69,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 - **Lợi ích:** viết query đúng phải biết field nào là `keyword` field nào là `text` — hiện dev phải tự gõ `GET /index/_mapping` rồi đọc JSON thô.
 - **Đánh giá:** elasticvix **đã fetch và flatten mapping sẵn** cho autocomplete (`src/lib/storage/mappingCache.ts`) — chỉ thiếu UI hiển thị. Rẻ nhất để làm, và có thể làm đẹp hơn Elasticvue: bảng field → type có search, thay vì JSON thô.
 
-### 1.3. Export / import config — ✅ Nên thêm
+### 1.3. Export / import config — ✅ Nên thêm · 🟢 ĐÃ BUILD
 
 - **Là gì:** Settings của Elasticvue có **DOWNLOAD BACKUP** / **IMPORT BACKUP** — xuất toàn bộ config (clusters, saved queries...) ra JSON và nhập lại.
 - **Lợi ích:** đổi máy, cài lại extension, hoặc share saved queries cho đồng nghiệp không bị mất sạch. Với extension, gỡ ra cài lại là **mất hết IndexedDB + storage.local** — rủi ro mất saved queries thật.
@@ -140,7 +140,7 @@ elasticvix: engine đọc syntax tree, đi theo key-path, gợi ý đúng ngữ 
 
 - Elasticvue saved queries: chỉ **Query + Name + ô filter**, không tags. elasticvix: tags, filter theo tag (AND), search theo tên — hơn rõ.
 - Elasticvue **không có history cho trang Search** (chỉ REST có). elasticvix có search history riêng, relative time, clear all.
-- Thiếu duy nhất: export/import (mục 1.3) — bịt nốt là trọn vẹn.
+- Thiếu duy nhất export/import (mục 1.3) — 🟢 ĐÃ BUILD, đã trọn vẹn.
 
 ### 2.3. Kibana-style console — đúng format dev đã quen
 
@@ -165,8 +165,8 @@ Lưu ý cho công bằng: local-first / không telemetry **không phải** diffe
 1. 🟢 **Mappings viewer** — rẻ nhất (data đã có sẵn), giá trị ngay. → **ĐÃ BUILD**
 2. 🟢 **Sửa/xoá document** — bước tự nhiên từ DocDialog, đúng nhu cầu hằng ngày. → **ĐÃ BUILD** (đơn; bulk delete chưa)
 3. 🟢 **Response QoL** (fold + download) — effort nhỏ. → **ĐÃ BUILD** (+ filter)
-4. ⚪ **Export/import config** — chống mất dữ liệu, giữ chân user. → chưa
+4. 🟢 **Export/import config** — chống mất dữ liệu, giữ chân user. → **ĐÃ BUILD** (2026-08-13)
 5. ⚪ **Multi-request console kiểu Kibana** — nới rộng lợi thế console. → chưa
 6. **Mở rộng autocomplete spec + enum values** — khoét sâu moat, chạy song song các mục trên. → 🟢 enum values **ĐÃ BUILD** · ⚪ mở rộng spec chưa
 
-**Còn lại đáng làm nhất:** §1.1 bulk delete (nối tiếp phần vừa build), §1.3 export/import config, §1.4 multi-request console, §2.1 mở rộng spec.json.
+**Còn lại đáng làm nhất:** §1.1 bulk delete, §1.4 multi-request console, §2.1 mở rộng spec.json.
