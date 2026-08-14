@@ -14,12 +14,17 @@ function pick(arr) {
   return arr[Math.floor(rand() * arr.length)];
 }
 
+// Số replica bám theo số node đang có: cluster demo 1 node mà để 1 replica thì
+// shard replica không gán được, health đứng ở yellow trong ảnh chụp store.
+const health = await fetch(`${ES}/_cluster/health`).then((r) => r.json());
+const replicas = Math.min(1, Math.max(0, (health.number_of_data_nodes ?? 1) - 1));
+
 async function createIndex(name, mappings) {
   await fetch(`${ES}/${name}`, { method: 'DELETE' }).catch(() => {});
   const res = await fetch(`${ES}/${name}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mappings }),
+    body: JSON.stringify({ settings: { number_of_replicas: replicas }, mappings }),
   });
   if (!res.ok) throw new Error(`create ${name}: ${res.status} ${await res.text()}`);
 }

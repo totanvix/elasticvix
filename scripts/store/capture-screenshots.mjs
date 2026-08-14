@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
-import sharp from 'sharp';
 import { mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { RAW_DIR, SHOT_VIEWPORT } from './shots.mjs';
 
 // AMENDED (controller-authorized): demo Elasticsearch runs on :9201, not :9200
 // (9200 belongs to an unrelated live project and must never be touched here).
@@ -39,14 +39,17 @@ function findChromeForTesting() {
 
 const CHROME = findChromeForTesting();
 const EXT = resolve('.output/chrome-mv3');
-const OUT = 'docs/store/screenshots';
+const OUT = RAW_DIR;
 // Fixed profile so connections/saved queries persist across shot 1..5 runs;
 // lives under node_modules/.cache so it never touches git status or gets
 // wiped by a wxt build.
 const PROFILE_DIR = resolve('node_modules/.cache/elasticvix-shots-profile');
-const shotArg = process.argv[2]; // '1'..'5' or blank = all
+const args = process.argv.slice(2);
+const isFresh = args.includes('--fresh'); // start from an empty profile (no stale connections/queries/theme)
+const shotArg = args.find((a) => /^\d+$/.test(a)); // '1'..'5' or blank = all
 
 mkdirSync(OUT, { recursive: true });
+if (isFresh) rmSync(PROFILE_DIR, { recursive: true, force: true });
 
 // A previous run that crashed or was killed mid-flight (before browser.close()
 // ran) can leave a stale SingletonLock in the profile dir, which then hangs
@@ -66,10 +69,12 @@ try {
       `--load-extension=${EXT}`,
       '--no-first-run',
       '--no-default-browser-check',
-      '--window-size=1280,880',
+      `--window-size=${SHOT_VIEWPORT.width},${SHOT_VIEWPORT.height + 120}`,
       `--user-data-dir=${PROFILE_DIR}`,
     ],
-    defaultViewport: { width: 1280, height: 800 },
+    // Captured at 2x so the composed listing image stays sharp after the frame
+    // scales the UI down into its card.
+    defaultViewport: { ...SHOT_VIEWPORT, deviceScaleFactor: 2 },
   });
 
   const sw = await browser.waitForTarget((t) => t.type() === 'service_worker', { timeout: 10000 });
@@ -79,9 +84,24 @@ try {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await sleep(1000);
 
+  // Two things shipped after the first screenshot set that can pop over a shot:
+  // the "What's new" dialog (opens when the stored last-seen version differs
+  // from the running one) and the rate/star nudge (opens after 15 runs, and
+  // capturing runs queries). Pin both to a quiet state on the extension origin,
+  // then reload so the app boots with them already settled.
+  await page.evaluate(() => {
+    const version = chrome.runtime.getManifest().version;
+    localStorage.setItem('elasticvix.changelog.lastSeenVersion', version);
+    localStorage.setItem(
+      'elasticvix.engagement',
+      JSON.stringify({ runs: 0, status: 'dismissed', snoozedAtRuns: 0 }),
+    );
+  });
+  await page.reload();
+  await sleep(800);
+
   async function save(name) {
-    const buf = await page.screenshot({ type: 'png' });
-    await sharp(buf).flatten({ background: '#ffffff' }).removeAlpha().png().toFile(`${OUT}/${name}`);
+    await page.screenshot({ type: 'png', path: `${OUT}/${name}` });
     console.log(`saved ${OUT}/${name}`);
   }
 
@@ -204,7 +224,12 @@ try {
     await sleep(400);
   }
 
-  async function setEditorBody(text) {
+  // Type compact single-line JSON, then let the app's own Format action
+  // pretty-print it. Typing pretty JSON directly does not work: CodeMirror's
+  // auto-close-brackets indents and closes on Enter, so literal closing braces
+  // in the typed text land as stray duplicate `}` lines. `aria-label` differs
+  // per view — 'Format' in the REST console, 'Format JSON' in Search.
+  async function setEditorBody(text, { format = true } = {}) {
     await page.locator('.cm-content').click();
     await page.keyboard.down('Meta');
     await page.keyboard.press('a');
@@ -217,6 +242,29 @@ try {
     // that specifically want the popup open (shot 2) re-summon it afterwards.
     await page.keyboard.press('Escape');
     await sleep(200);
+    if (format) await formatEditor();
+  }
+
+  // REST console Run button. Its label carries the shortcut ('Run ⌘↵'), so match
+  // by prefix. Sending the shortcut itself does not work here: CodeMirror's
+  // default keymap binds Mod-Enter to insertBlankLine and wins over the app's
+  // own Mod-Enter run binding, so the keypress just adds an empty line.
+  async function clickRun() {
+    await page.evaluate(() => {
+      const btn = Array.from(document.querySelectorAll('button')).find((b) =>
+        b.textContent?.trim().startsWith('Run'),
+      );
+      btn?.click();
+    });
+    await sleep(1800);
+  }
+
+  async function formatEditor() {
+    await page.evaluate(() => {
+      const btn = document.querySelector('[aria-label="Format"], [aria-label="Format JSON"]');
+      btn?.click();
+    });
+    await sleep(400);
   }
 
   // IndicesSelect is a checkbox popover (not a plain button), and its trigger
@@ -258,6 +306,23 @@ try {
     await sleep(300);
   }
 
+  // The hits table leads with `_id` — a random string that says nothing about
+  // the data. Hiding it is a normal in-app action (Columns menu), driven here
+  // through the same per-connection localStorage key the menu writes.
+  async function hideColumns(columns) {
+    const connectionId = await page.evaluate(
+      async () => (await chrome.storage.local.get('activeConnectionId')).activeConnectionId,
+    );
+    if (!connectionId) return;
+    await page.evaluate(
+      (id, cols) => localStorage.setItem(`elasticvix.search.hiddenColumns.${id}`, JSON.stringify(cols)),
+      connectionId,
+      columns,
+    );
+    await page.reload();
+    await sleep(1200);
+  }
+
   async function runSearchAndWait() {
     await clickButton('Search'); // SearchPage toolbar Run button (distinct from nav 'SEARCH')
     await sleep(1500);
@@ -267,18 +332,22 @@ try {
   // can silently inherit whatever an earlier one left behind (bit us once:
   // re-running shot 1 after shot 5 produced a dark screenshot). Every shot
   // that cares about theme should call this rather than assume a default.
+  // The theme control moved into the Settings popover, so drive it through the
+  // key it persists to ('elasticvix-theme') and reload — one step instead of
+  // opening a menu, and it works from any view.
   async function ensureTheme(mode) {
     const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'));
     if ((mode === 'dark') === isDark) return;
-    await page.locator('[aria-label="Toggle theme"]').click();
-    await sleep(500);
+    await page.evaluate((m) => localStorage.setItem('elasticvix-theme', m), mode);
+    await page.reload();
+    await sleep(1200);
   }
 
-  // Idempotent: saves a REST query so the "Saved" left rail (shot 2's
-  // background and shot 3's subject) never shows its empty state. Must switch
-  // to REST view *before* checking for existing text, since SavedQueriesPanel
-  // (and its saved-query names) is only mounted while the REST view is active.
-  async function ensureSavedQuery(name, requestText) {
+  // Idempotent: saves a REST query so the "Library" left rail (shot 4's
+  // subject) never shows its empty state. Must switch to REST view *before*
+  // checking for existing text, since SavedQueriesPanel (and its saved-query
+  // names) is only mounted while the REST view is active.
+  async function ensureSavedQuery(name, requestText, tags) {
     await goToView('REST');
     await sleep(300);
     const exists = await eventuallyBodyIncludes(name);
@@ -287,6 +356,7 @@ try {
     await clickButton('Save'); // QueryEditor toolbar -> opens SaveQueryDialog
     await sleep(400);
     await page.locator('#q-name').fill(name);
+    if (tags) await page.locator('#q-tags').fill(tags);
     await clickDialogButton('Save');
     await sleep(500);
   }
@@ -296,88 +366,107 @@ try {
   };
 
   // Setup shared by every shot: one connection to the demo cluster, and a
-  // couple of saved queries so shot 2/3 never show the saved-queries empty
-  // state (and shot 3 has more than one item to show off the library).
-  //
-  // Bodies are typed as compact single-line JSON, not pretty-printed with
-  // embedded newlines: CodeMirror's auto-close-brackets does smart
-  // indent-and-close-on-Enter, which collides with literal closing braces
-  // already present in typed multi-line text and leaves stray duplicate `}`
-  // lines behind. Compact JSON sidesteps that entirely.
+  // small saved-query library so shot 4 shows real content and tag chips.
   await ensureConnection('Local demo', DEMO_ES_URL);
-  await ensureSavedQuery('Products by category', 'GET /products/_search\n{"query":{"match_all":{}}}');
-  await ensureSavedQuery('Error logs by service', 'GET /app-logs/_search\n{"query":{"term":{"level":"error"}}}');
+  await ensureSavedQuery(
+    'Top categories by revenue',
+    'GET /products/_search\n{"size":0,"aggs":{"by_category":{"terms":{"field":"category","size":5}}}}',
+    'products, aggs',
+  );
+  await ensureSavedQuery(
+    'Errors in the last hour',
+    'GET /app-logs/_search\n{"query":{"term":{"level":"error"}},"size":20}',
+    'logs, oncall',
+  );
+  await ensureSavedQuery(
+    'Slowest requests',
+    'GET /app-logs/_search\n{"query":{"range":{"latency_ms":{"gte":500}}},"sort":[{"latency_ms":"desc"}],"size":20}',
+    'logs, perf',
+  );
 
-  // --- 1. Search UI with hits filled from products + an aggs-bearing query ---
+  // --- 1. Search UI: hits table filled from products, aggregation query ---
   await run(1, async () => {
     await switchToConnection('Local demo');
     await goToView('SEARCH');
     await ensureTheme('light');
+    await hideColumns(['_id']);
     await selectOnlyIndex('products');
-    await setEditorBody(
-      '{"query":{"range":{"price":{"gte":10}}},"aggs":{"by_category":{"terms":{"field":"category"}},"avg_price":{"avg":{"field":"price"}}},"size":25}',
-    );
+    // Kept short on purpose: formatted JSON gets tall fast, and the editor pane
+    // is 192px — a longer body would be cut off mid-query in the screenshot.
+    await setEditorBody('{"query":{"match":{"name":"pro"}},"sort":[{"price":"desc"}],"size":25}');
     await runSearchAndWait();
     await save('01-search.png');
   });
 
-  // --- 2. REST view with autocomplete open (field suggestions from products mapping) ---
+  // --- 2. REST console with field autocomplete open ---
   await run(2, async () => {
     await goToView('REST');
     await ensureTheme('light');
     await sleep(500);
-    // "term" query expects a field name as its key -> triggers field (not just
-    // keyword) suggestions from the products mapping (brand/category/name/...).
-    await setEditorBody('GET /products/_search\n{"query":{"term":{"');
+    // Run a real request first so the response pane shows actual JSON behind
+    // the completion popup — an empty "Run a request to see the response."
+    // pane wastes half the screenshot.
+    await setEditorBody('GET /products/_search\n{"query":{"term":{"category":"laptops"}},"size":3}');
+    await clickRun();
+    // Build the body by typing only opening delimiters: CodeMirror auto-closes
+    // each one and indents on Enter, so the visible text is already
+    // pretty-printed. Format can't be used here — the body is deliberately
+    // left mid-token so the completion popup has something to complete.
+    await page.locator('.cm-content').click();
+    await page.keyboard.down('Meta');
+    await page.keyboard.press('a');
+    await page.keyboard.up('Meta');
+    await page.keyboard.press('Backspace');
+    await page.keyboard.type('GET /products/_search\n{\n"query": {\n"term": {\n"', { delay: 20 });
+    await sleep(400);
     await page.keyboard.down('Control');
     await page.keyboard.press('Space');
     await page.keyboard.up('Control');
-    await sleep(800);
+    await sleep(900);
     await save('02-console-autocomplete.png');
   });
 
-  // --- 3. Saved queries panel (REST view left rail) ---
+  // --- 3. Cluster overview: health + per-node RAM/heap/disk table ---
   await run(3, async () => {
-    await goToView('REST');
-    await ensureTheme('light');
-    await sleep(500);
-    await clickButton('Saved'); // left rail tab (defaults to it, but be explicit)
-    await sleep(500);
-    await save('03-saved-queries.png');
-  });
-
-  // --- 4. Connections (multi-cluster selector) ---
-  await run(4, async () => {
-    await ensureTheme('light');
-    await ensureConnection('Staging', DEMO_ES_URL);
-    await openClusterSelector();
-    await sleep(500);
-    await save('04-connections.png');
-  });
-
-  // --- 5. Dark mode (Search view, with data visible) ---
-  await run(5, async () => {
-    await switchToConnection('Local demo');
-    await goToView('SEARCH');
-    await selectOnlyIndex('products');
-    const hasResults = await page.evaluate(() => document.querySelectorAll('table tbody tr').length > 0);
-    if (!hasResults) {
-      await setEditorBody('{"query":{"match_all":{}}}');
-      await runSearchAndWait();
-    }
-    await ensureTheme('dark');
-    await save('05-dark-mode.png');
-  });
-
-  // --- 6. Cluster overview tab (health + per-node RAM/heap/disk table) ---
-  await run(6, async () => {
     await switchToConnection('Local demo');
     await ensureTheme('light');
     await goToView('CLUSTER');
     // Wait for the node table to render (proves the four fetches resolved).
     await page.waitForFunction(() => document.querySelectorAll('table tbody tr').length > 0, { timeout: 15000 });
     await sleep(800);
-    await save('06-cluster.png');
+    await save('03-cluster.png');
+  });
+
+  // --- 4. Saved queries library + a run response in the REST console ---
+  await run(4, async () => {
+    await goToView('REST');
+    await ensureTheme('light');
+    await sleep(500);
+    await setEditorBody(
+      'GET /app-logs/_search\n{"query":{"term":{"level":"error"}},"aggs":{"by_service":{"terms":{"field":"service"}}},"size":5}',
+    );
+    await clickRun();
+    await save('04-saved-queries.png');
+  });
+
+  // --- 5. Dark mode + the multi-cluster selector open ---
+  await run(5, async () => {
+    // Adding a connection makes it active, so switch back afterwards: the shot
+    // needs the demo cluster's data (and its hidden-column preference, which is
+    // stored per connection).
+    await ensureConnection('Staging', DEMO_ES_URL);
+    await switchToConnection('Local demo');
+    // Theme before the search: switching it reloads the page, which would throw
+    // away results captured before it.
+    await ensureTheme('dark');
+    await hideColumns(['_id']);
+    await goToView('SEARCH');
+    await selectOnlyIndex('products');
+    await setEditorBody('{"query":{"match":{"name":"pro"}},"sort":[{"price":"desc"}],"size":25}');
+    await runSearchAndWait();
+    await openClusterSelector();
+    await sleep(500);
+    await save('05-dark-mode.png');
   });
 
   console.log('Done.');

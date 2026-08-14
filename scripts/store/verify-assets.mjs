@@ -1,16 +1,15 @@
 import sharp from 'sharp';
 import { existsSync } from 'node:fs';
+import { SHOTS, OUT_DIR } from './shots.mjs';
 
 const SPECS = [
   { path: 'public/icon/16.png', w: 16, h: 16, opaque: false },
   { path: 'public/icon/32.png', w: 32, h: 32, opaque: false },
   { path: 'public/icon/48.png', w: 48, h: 48, opaque: false },
   { path: 'public/icon/128.png', w: 128, h: 128, opaque: false },
-  { path: 'docs/store/screenshots/01-search.png', w: 1280, h: 800, opaque: true },
-  { path: 'docs/store/screenshots/02-console-autocomplete.png', w: 1280, h: 800, opaque: true },
-  { path: 'docs/store/screenshots/03-saved-queries.png', w: 1280, h: 800, opaque: true },
-  { path: 'docs/store/screenshots/04-connections.png', w: 1280, h: 800, opaque: true },
-  { path: 'docs/store/screenshots/05-dark-mode.png', w: 1280, h: 800, opaque: true },
+  // Screenshots come from the one shot list, so renaming or reordering a shot
+  // can never leave this check pointing at a file nobody produces any more.
+  ...SHOTS.map((s) => ({ path: `${OUT_DIR}/${s.file}`, w: 1280, h: 800, opaque: true })),
   { path: 'docs/store/promo/small-440x280.png', w: 440, h: 280, opaque: true },
   { path: 'docs/store/promo/marquee-1400x560.png', w: 1400, h: 560, opaque: true },
 ];
