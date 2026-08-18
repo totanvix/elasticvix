@@ -144,6 +144,32 @@ describe('docCompletions (whole request-line + body document)', () => {
   });
 });
 
+describe('multi-request documents', () => {
+  const oneField: FlatField[] = [{ path: 'title', type: 'text' }];
+  const doc = 'GET /logs/_search\n{ "query": { "match": { "" } } }\n\nPOST /users/_count\n{ "query": { "bool": { "" } } }';
+
+  it('completions in the second block resolve at its own body position', () => {
+    const pos = doc.lastIndexOf('""') + 1;
+    const labels = docCompletions(doc, pos, oneField).map((c) => c.label);
+    expect(labels).toEqual(expect.arrayContaining(['must', 'should', 'filter', 'must_not']));
+  });
+  it('completions in the first block are unaffected by later blocks', () => {
+    const pos = doc.indexOf('""') + 1;
+    expect(docCompletions(doc, pos, oneField)).toEqual([{ label: 'title', kind: 'field', detail: 'text' }]);
+  });
+  it('returns [] on the second request line', () => {
+    expect(docCompletions(doc, doc.indexOf('POST') + 3, oneField)).toEqual([]);
+  });
+  it('returns [] on the blank line between blocks', () => {
+    expect(docCompletions(doc, doc.indexOf('\n\nPOST') + 1, oneField)).toEqual([]);
+  });
+  it('docValueField finds the field at a term value in the second block', () => {
+    const f: FlatField[] = [{ path: 'status', type: 'keyword' }];
+    const d = 'GET /a/_search\n{ "size": 1 }\n\nPOST /logs/_search\n{ "query": { "term": { "status": "" } } }';
+    expect(docValueField(d, d.lastIndexOf('""') + 1, f)).toBe('status');
+  });
+});
+
 describe('bodyCompletions (body-only Search page document)', () => {
   const oneField: FlatField[] = [{ path: 'title', type: 'text' }];
 

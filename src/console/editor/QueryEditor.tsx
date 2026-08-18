@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { Wand2 } from 'lucide-react';
@@ -17,7 +17,7 @@ type Props = {
   active: Connection | undefined;
   text: string;
   onChange: (value: string) => void;
-  onRun: () => void;
+  onRun: (pos: number) => void;
   isRunning: boolean;
   onFormat: () => void;
   onSave: () => void;
@@ -32,6 +32,9 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
   const onRunRef = useRef(onRun);
   onRunRef.current = onRun;
 
+  const cmRef = useRef<ReactCodeMirrorRef>(null);
+  const cursorPos = () => cmRef.current?.view?.state.selection.main.head ?? 0;
+
   const extensions = useMemo(() => {
     const getFields = makeGetFields(active);
     const getFieldValues = makeGetFieldValues(active);
@@ -42,8 +45,8 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
         keymap.of([
           {
             key: 'Mod-Enter',
-            run: () => {
-              onRunRef.current();
+            run: (view) => {
+              onRunRef.current(view.state.selection.main.head);
               return true;
             },
           },
@@ -55,7 +58,7 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b px-2 py-1">
-        <Button size="sm" onClick={onRun} disabled={isRunning}>
+        <Button size="sm" onClick={() => onRun(cursorPos())} disabled={isRunning}>
           {isRunning ? 'Running…' : 'Run ⌘↵'}
         </Button>
         <Button size="sm" variant="outline" onClick={onSave}>
@@ -73,6 +76,7 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         <CodeMirror
+          ref={cmRef}
           value={text}
           onChange={onChange}
           extensions={extensions}

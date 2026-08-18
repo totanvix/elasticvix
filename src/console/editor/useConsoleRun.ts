@@ -1,21 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Connection, HistoryEntry } from '../../lib/types';
 import type { EsResult } from '../../lib/rpc/messages';
 import { esRequest } from '../../lib/rpc/client';
-import { parseRequestLine } from '../../lib/autocomplete/requestLine';
+import { splitBlocks, runnableBlockAt } from '../../lib/autocomplete/requestBlocks';
 import { addHistory } from '../../lib/storage/history';
 import { newId } from '../ids';
 import { recordEngagementRun } from '../engagement/engagementStore';
 
 const DEFAULT_TEXT = 'GET /_search\n{\n  "query": {\n    "match_all": {}\n  }\n}';
-
-function splitRequest(text: string): { method: string; path: string; body?: string } {
-  const nl = text.indexOf('\n');
-  const firstLine = nl === -1 ? text : text.slice(0, nl);
-  const { method, path } = parseRequestLine(firstLine);
-  const body = nl === -1 ? '' : text.slice(nl + 1).trim();
-  return { method, path, body: body || undefined };
-}
 
 export function useConsoleRun(active: Connection | undefined) {
   const [text, setText] = useState<string>(DEFAULT_TEXT);
@@ -23,20 +15,30 @@ export function useConsoleRun(active: Connection | undefined) {
   const [isRunning, setRunning] = useState(false);
   const [ranAt, setRanAt] = useState(0); // bump after each run so History can refresh
 
-  const run = useCallback(async () => {
+  // Read the text through a ref so `run` keeps a stable identity across
+  // keystrokes — the editor's extension array depends on it staying put.
+  const textRef = useRef(text);
+  textRef.current = text;
+
+  const run = useCallback(async (pos: number) => {
     if (!active) {
       setResponse({ status: 0, took: 0, body: null, error: 'No active connection' });
       return;
     }
-    const { method, path, body } = splitRequest(text);
+    const block = runnableBlockAt(splitBlocks(textRef.current), pos);
+    if (!block) {
+      setResponse({ status: 0, took: 0, body: null, error: 'No request found — expected a METHOD /path line' });
+      return;
+    }
+    const body = block.bodyText.trim() || undefined;
     setRunning(true);
     try {
-      const result = await esRequest(active, method, path, body);
+      const result = await esRequest(active, block.method, block.path, body);
       setResponse(result);
       const entry: HistoryEntry = {
         id: newId(),
-        method,
-        path,
+        method: block.method,
+        path: block.path,
         body: body ?? '',
         connectionId: active.id,
         status: result.status,
@@ -49,7 +51,7 @@ export function useConsoleRun(active: Connection | undefined) {
     } finally {
       setRunning(false);
     }
-  }, [active, text]);
+  }, [active]);
 
   const format = useCallback(() => {
     const nl = text.indexOf('\n');

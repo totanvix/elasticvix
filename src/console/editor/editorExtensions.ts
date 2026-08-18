@@ -6,11 +6,12 @@ import type { FlatField } from '../../lib/types';
 import { esCompletionSource } from '../../lib/autocomplete/engine';
 import { findUnknownFields, type FieldRef } from '../../lib/autocomplete/lintFields';
 import { spec as defaultSpec } from '../../lib/autocomplete/spec';
-import { parseRequestLine } from '../../lib/autocomplete/requestLine';
+import { lintTargets } from './lintTargets';
 
-// The document is `METHOD /path` on line 1 + a JSON body. We highlight with
-// json() (good enough for the body) and drive field-aware completion via the
-// engine's source, which parses only the body sub-range.
+// The document holds one or more requests, each a `METHOD /path` line + an
+// optional JSON body. We highlight with json() (good enough for the bodies)
+// and drive field-aware completion via the engine's source, which parses only
+// body sub-ranges.
 
 function toDiagnostics(refs: FieldRef[], offset: number, index?: string): Diagnostic[] {
   const where = index ? ` of ${index}` : '';
@@ -22,23 +23,29 @@ function toDiagnostics(refs: FieldRef[], offset: number, index?: string): Diagno
   }));
 }
 
-// REST console: request line on line 1, JSON body after. Skip linting when the
-// endpoint has no body spec, or the target is multi/wildcard (`*`/`,`) — the
-// mapping fetch only returns the first concrete index, so a partial mapping
-// would flag valid fields.
+// REST console: lint every lintable request block (see lintTargets for the
+// skip rules), translating each block's diagnostics by its body offset. The
+// mapping fetch is shared per lint pass so blocks hitting the same index only
+// fetch once.
 function restLinter(getFields: (index?: string) => Promise<FlatField[]>): Extension {
   return linter(async (view): Promise<Diagnostic[]> => {
-    const docText = view.state.doc.toString();
-    const nl = docText.indexOf('\n');
-    if (nl === -1) return [];
-    const { index, endpoint } = parseRequestLine(docText.slice(0, nl));
-    const bodyRef = endpoint ? defaultSpec.endpoints[endpoint]?.bodyRef : undefined;
-    if (!bodyRef) return [];
-    if (index && /[*,]/.test(index)) return [];
-    const fields = await getFields(index);
-    const bodyStart = nl + 1;
-    const refs = findUnknownFields(docText.slice(bodyStart), bodyRef, fields);
-    return toDiagnostics(refs, bodyStart, index);
+    const targets = lintTargets(view.state.doc.toString());
+    if (targets.length === 0) return [];
+    const fieldsByIndex = new Map<string | undefined, Promise<FlatField[]>>();
+    const fieldsFor = (index?: string): Promise<FlatField[]> => {
+      const cached = fieldsByIndex.get(index);
+      if (cached) return cached;
+      const fetched = getFields(index);
+      fieldsByIndex.set(index, fetched);
+      return fetched;
+    };
+    const perTarget = await Promise.all(
+      targets.map(async (t) => {
+        const fields = await fieldsFor(t.index);
+        return toDiagnostics(findUnknownFields(t.bodyText, t.bodyRef, fields), t.bodyFrom, t.index);
+      }),
+    );
+    return perTarget.flat();
   });
 }
 
