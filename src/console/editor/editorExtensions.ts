@@ -7,6 +7,7 @@ import { esCompletionSource } from '../../lib/autocomplete/engine';
 import { findUnknownFields, type FieldRef } from '../../lib/autocomplete/lintFields';
 import { spec as defaultSpec } from '../../lib/autocomplete/spec';
 import { lintTargets } from './lintTargets';
+import { activeBlockHighlight } from './activeBlockHighlight';
 
 // The document holds one or more requests, each a `METHOD /path` line + an
 // optional JSON body. We highlight with json() (good enough for the bodies)
@@ -67,6 +68,7 @@ export function buildEditorExtensions(
   return [
     json(),
     autocompletion({ override: [esCompletionSource(getFields, getFieldValues)] }),
+    activeBlockHighlight(),
     ...(lintEnabled ? [restLinter(getFields)] : []),
   ];
 }

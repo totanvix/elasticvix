@@ -11,7 +11,7 @@ export const RELEASES: readonly ReleaseEntry[] = [
     version: '1.0.9',
     date: '2026-08-18',
     changes: [
-      'Multi-request console — write several requests in one editor; Cmd+Enter or Run executes the request at the cursor.',
+      'Multi-request console — write several requests in one editor; Cmd+Enter or Run executes the request at the cursor, marked with an accent border.',
       'Loading a query from Library or History now appends it to the console instead of replacing what you typed.',
       'Console text is remembered per connection, so it survives closing the tab or switching clusters.',
       'Format now tidies every request body in the editor, and Save stores the request at the cursor.',

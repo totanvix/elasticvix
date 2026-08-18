@@ -95,15 +95,15 @@ describe('blockAt / runnableBlockAt', () => {
 
 describe('activeBlockRange', () => {
   it('covers request line through body of the block at cursor', () => {
-    const range = activeBlockRange(TWO, TWO.indexOf('"query"'));
+    const range = activeBlockRange(splitBlocks(TWO), TWO.indexOf('"query"'));
     expect(range).toEqual({ from: 0, to: TWO.indexOf('\n\nPOST') });
   });
   it('covers only the request line when there is no body', () => {
     const doc = 'GET /_cat/indices';
-    expect(activeBlockRange(doc, 5)).toEqual({ from: 0, to: doc.length });
+    expect(activeBlockRange(splitBlocks(doc), 5)).toEqual({ from: 0, to: doc.length });
   });
   it('returns undefined when the doc has no blocks', () => {
-    expect(activeBlockRange('nope', 0)).toBeUndefined();
+    expect(activeBlockRange(splitBlocks('nope'), 0)).toBeUndefined();
   });
 });
 

@@ -81,8 +81,8 @@ export function runnableBlockAt(blocks: RequestBlock[], pos: number): RequestBlo
   return blockAt(blocks, pos) ?? blocks[0];
 }
 
-export function activeBlockRange(docText: string, pos: number): { from: number; to: number } | undefined {
-  const block = runnableBlockAt(splitBlocks(docText), pos);
+export function activeBlockRange(blocks: RequestBlock[], pos: number): { from: number; to: number } | undefined {
+  const block = runnableBlockAt(blocks, pos);
   if (!block) return undefined;
   return { from: block.lineFrom, to: block.bodyText ? block.bodyTo : block.lineTo };
 }
