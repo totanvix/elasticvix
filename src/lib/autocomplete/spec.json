@@ -13,8 +13,14 @@
     },
     "query": {
       "bool": "#bool", "match": "#matchQ", "match_phrase": "#matchQ",
+      "match_phrase_prefix": "#matchPhrasePrefixQ", "multi_match": "#multiMatch",
       "term": "#termQ", "terms": "#termsQ", "range": "#rangeQ",
-      "exists": "#existsQ", "match_all": {}
+      "exists": "#existsQ", "ids": "#idsQ", "match_all": {},
+      "wildcard": "#wildcardQ", "prefix": "#prefixQ", "fuzzy": "#fuzzyQ",
+      "regexp": "#regexpQ", "query_string": "#queryString",
+      "simple_query_string": "#simpleQueryString", "nested": "#nestedQ",
+      "constant_score": "#constantScore", "dis_max": "#disMax",
+      "function_score": "#functionScore"
     },
     "bool": {
       "must": "[#query]", "should": "[#query]", "filter": "[#query]",
@@ -22,16 +28,83 @@
     },
     "matchQ": { "@field": "#matchOpts" },
     "matchOpts": { "query": "any", "operator": "enum:or,and", "fuzziness": "any" },
+    "matchPhrasePrefixQ": { "@field": "#matchPhrasePrefixOpts" },
+    "matchPhrasePrefixOpts": { "query": "any", "max_expansions": "int", "slop": "int" },
+    "multiMatch": {
+      "query": "any", "fields": "[@field]",
+      "type": "enum:best_fields,most_fields,cross_fields,phrase,phrase_prefix,bool_prefix",
+      "operator": "enum:or,and", "fuzziness": "any",
+      "minimum_should_match": "any", "tie_breaker": "any"
+    },
     "termQ": { "@field": "any" },
     "termsQ": { "@field": "any" },
     "rangeQ": { "@field": "#rangeOpts" },
     "rangeOpts": { "gte": "any", "lte": "any", "gt": "any", "lt": "any", "format": "string", "boost": "int" },
     "existsQ": { "field": "@field" },
+    "idsQ": { "values": "any" },
+    "wildcardQ": { "@field": "#wildcardOpts" },
+    "wildcardOpts": { "value": "string", "boost": "any", "case_insensitive": "any", "rewrite": "string" },
+    "prefixQ": { "@field": "#prefixOpts" },
+    "prefixOpts": { "value": "string", "case_insensitive": "any" },
+    "fuzzyQ": { "@field": "#fuzzyOpts" },
+    "fuzzyOpts": { "value": "string", "fuzziness": "any", "prefix_length": "int", "max_expansions": "int", "transpositions": "any" },
+    "regexpQ": { "@field": "#regexpOpts" },
+    "regexpOpts": { "value": "string", "flags": "string", "case_insensitive": "any", "max_determinized_states": "int" },
+    "queryString": {
+      "query": "string", "default_field": "@field", "fields": "[@field]",
+      "default_operator": "enum:or,and", "analyze_wildcard": "any"
+    },
+    "simpleQueryString": {
+      "query": "string", "fields": "[@field]", "default_operator": "enum:or,and"
+    },
+    "nestedQ": {
+      "path": "string", "query": "#query",
+      "score_mode": "enum:avg,sum,min,max,none", "ignore_unmapped": "any"
+    },
+    "constantScore": { "filter": "#query", "boost": "any" },
+    "disMax": { "queries": "[#query]", "tie_breaker": "any" },
+    "functionScore": {
+      "query": "#query", "functions": "[#scoreFunction]",
+      "score_mode": "enum:multiply,sum,avg,first,max,min",
+      "boost_mode": "enum:multiply,replace,sum,avg,max,min",
+      "max_boost": "any", "min_score": "any"
+    },
+    "scoreFunction": {
+      "filter": "#query", "weight": "any", "random_score": {},
+      "field_value_factor": "#fieldValueFactor", "script_score": "any"
+    },
+    "fieldValueFactor": {
+      "field": "@field", "factor": "any",
+      "modifier": "enum:none,log,log1p,log2p,ln,ln1p,ln2p,square,sqrt,reciprocal",
+      "missing": "any"
+    },
     "sortItem": { "@field": "#sortOpts" },
     "sortOpts": { "order": "enum:asc,desc", "mode": "enum:min,max,sum,avg,median" },
     "aggs": { "@any": "#aggBody" },
-    "aggBody": { "terms": "#aggTerms", "avg": "#aggFieldOnly", "sum": "#aggFieldOnly", "max": "#aggFieldOnly", "min": "#aggFieldOnly" },
+    "aggBody": {
+      "terms": "#aggTerms", "avg": "#aggFieldOnly", "sum": "#aggFieldOnly",
+      "max": "#aggFieldOnly", "min": "#aggFieldOnly",
+      "cardinality": "#aggCardinality", "value_count": "#aggFieldOnly",
+      "stats": "#aggFieldOnly", "extended_stats": "#aggFieldOnly",
+      "percentiles": "#aggPercentiles",
+      "date_histogram": "#aggDateHistogram", "histogram": "#aggHistogram",
+      "range": "#aggRange", "filter": "#query", "nested": "#aggNested",
+      "top_hits": "#aggTopHits", "aggs": "#aggs"
+    },
     "aggTerms": { "field": "@field", "size": "int" },
-    "aggFieldOnly": { "field": "@field" }
+    "aggFieldOnly": { "field": "@field" },
+    "aggCardinality": { "field": "@field", "precision_threshold": "int" },
+    "aggPercentiles": { "field": "@field", "percents": "any" },
+    "aggDateHistogram": {
+      "field": "@field",
+      "calendar_interval": "enum:minute,hour,day,week,month,quarter,year",
+      "fixed_interval": "string", "format": "string",
+      "time_zone": "string", "min_doc_count": "int"
+    },
+    "aggHistogram": { "field": "@field", "interval": "int", "min_doc_count": "int" },
+    "aggRange": { "field": "@field", "ranges": "[#aggRangeBucket]", "keyed": "any" },
+    "aggRangeBucket": { "from": "any", "to": "any", "key": "string" },
+    "aggNested": { "path": "string" },
+    "aggTopHits": { "size": "int", "sort": "[#sortItem]", "_source": "any" }
   }
 }

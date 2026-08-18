@@ -8,6 +8,14 @@ export type ReleaseEntry = {
 // creates the tag commit, so anything added later lands outside the tag.
 export const RELEASES: readonly ReleaseEntry[] = [
   {
+    version: '1.0.9',
+    date: '2026-08-18',
+    changes: [
+      'Autocomplete now covers many more query types — wildcard, prefix, fuzzy, regexp, multi_match, query_string, simple_query_string, ids, nested, constant_score, dis_max and function_score.',
+      'Autocomplete for more aggregations — date_histogram, histogram, percentiles, cardinality, stats, value_count, range, filter, top_hits, and nested sub-aggregations.',
+    ],
+  },
+  {
     version: '1.0.8',
     date: '2026-08-13',
     changes: [
