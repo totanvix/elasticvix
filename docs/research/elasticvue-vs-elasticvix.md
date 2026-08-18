@@ -20,10 +20,10 @@
 - **§1.9 Cluster overview** — **tab CLUSTER** (view mặc định): health + version + summary cards + **bảng per-node RAM/heap/disk/CPU** (`_cluster/health` + `GET /` + `_cluster/stats` + `_cat/nodes`). Làm dạng tab per-node thay vì popover "bản nhẹ" ban đầu.
 - **§1.3 Export/import config** — dialog Backup & restore trên TopNav: export connections + saved queries ra JSON (checkbox include credentials, mặc định tắt), import merge theo id (`src/lib/storage/backup.ts`).
 - **§2.1 Mở rộng spec.json** (2026-08-18) — 13 query types mới (`wildcard/prefix/fuzzy/regexp/multi_match/match_phrase_prefix/query_string/simple_query_string/ids/nested/constant_score/dis_max/function_score`) + 11 aggs mới (`date_histogram/histogram/percentiles/cardinality/stats/value_count/range/filter/nested/top_hits`) + sub-aggs lồng nhau.
+- **§1.4 Multi-request console** kiểu Kibana (2026-08-18) — nhiều request trong 1 editor (`src/lib/autocomplete/requestBlocks.ts`), Cmd+Enter/Run chạy block tại cursor (kèm fix Cmd+Enter vốn bị basicSetup chiếm), highlight block active, autocomplete + lint scope theo index từng block, Format tất cả blocks, Save block tại cursor, load từ Library/History append vào cuối, editor text lưu theo connection.
 
 **⚪ Chưa build**
 - **§1.1 Bulk delete** (checkbox nhiều dòng) — cố tình để lại làm follow-up.
-- **§1.4 Multi-request console** kiểu Kibana.
 - **§2.5 Diff 2 response** (cần multi-request console).
 - **§1.6–1.10** (⚠️ cân nhắc): index admin actions, query-string box, aggregations tab, i18n. *(§1.9 cluster overview đã build ở trên.)*
 - **§1.11** (❌ chưa cần): nodes/shards, snapshots, index templates/aliases, AWS IAM, vim keybindings...
@@ -44,7 +44,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 | Document | Sửa document inline, xoá document (đơn + bulk) | ✅ Nên thêm | 🟢 Đơn xong · ⚪ bulk |
 | Index | Mappings viewer (xem info/mapping của index) | ✅ Nên thêm | 🟢 Xong |
 | App | Export/import config (backup JSON) | ✅ Nên thêm | 🟢 Xong |
-| REST | Multi-tab / nhiều request | ✅ Nên thêm (kiểu Kibana) | ⚪ Chưa |
+| REST | Multi-tab / nhiều request | ✅ Nên thêm (kiểu Kibana) | 🟢 Xong |
 | REST | Fold/expand response, download response | ✅ Nên thêm | 🟢 Xong (+ filter) |
 | Index | Hành động quản trị index (create, delete, refresh, flush...) | ⚠️ Cân nhắc (bản tối giản) | ⚪ Chưa |
 | Search | Query-string box + search examples | ⚠️ Cân nhắc | ⚪ Chưa |
@@ -75,7 +75,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 - **Lợi ích:** đổi máy, cài lại extension, hoặc share saved queries cho đồng nghiệp không bị mất sạch. Với extension, gỡ ra cài lại là **mất hết IndexedDB + storage.local** — rủi ro mất saved queries thật.
 - **Đánh giá:** quan trọng cho retention. Connections + saved queries của elasticvix đều đã là JSON — serialize/deserialize là đủ. Lưu ý: mask credentials khi export hoặc cảnh báo rõ.
 
-### 1.4. Multi-request console — ✅ Nên thêm (kiểu Kibana, không phải kiểu tabs)
+### 1.4. Multi-request console — ✅ Nên thêm (kiểu Kibana, không phải kiểu tabs) · 🟢 ĐÃ BUILD
 
 - **Là gì:** Elasticvue cho mở nhiều **tab** REST song song, mỗi tab một request.
 - **Lợi ích:** so sánh 2 query, giữ nguyên ngữ cảnh khi thử nghiệm.
@@ -166,7 +166,7 @@ Lưu ý cho công bằng: local-first / không telemetry **không phải** diffe
 2. 🟢 **Sửa/xoá document** — bước tự nhiên từ DocDialog, đúng nhu cầu hằng ngày. → **ĐÃ BUILD** (đơn; bulk delete chưa)
 3. 🟢 **Response QoL** (fold + download) — effort nhỏ. → **ĐÃ BUILD** (+ filter)
 4. 🟢 **Export/import config** — chống mất dữ liệu, giữ chân user. → **ĐÃ BUILD** (2026-08-13)
-5. ⚪ **Multi-request console kiểu Kibana** — nới rộng lợi thế console. → chưa
+5. 🟢 **Multi-request console kiểu Kibana** — nới rộng lợi thế console. → **ĐÃ BUILD** (2026-08-18)
 6. 🟢 **Mở rộng autocomplete spec + enum values** — khoét sâu moat. → **ĐÃ BUILD** (enum values + spec 2026-08-18)
 
-**Còn lại đáng làm nhất:** §1.1 bulk delete, §1.4 multi-request console.
+**Còn lại đáng làm nhất:** §1.1 bulk delete, §2.5 diff 2 response (multi-request console đã mở đường).
