@@ -38,7 +38,8 @@ Three backends, each with a settled purpose. Putting data in the wrong one cause
 - `browser.storage.local` — connections and the active connection id, via `src/lib/storage/connections.ts`.
   Keep that file the only consumer.
 - IndexedDB through `idb` (`src/lib/storage/db.ts`) — saved queries, history, and derived caches.
-- `localStorage` with an `elasticvix.` prefix — UI preferences only (view, theme, lint toggle, last-seen version).
+- `localStorage` with an `elasticvix.` prefix — UI preferences (view, theme, lint toggle, last-seen version)
+  and per-connection editor text (`elasticvix.console.${connectionId}`, `elasticvix.search.${connectionId}`).
 
 ## Changelog — required for user-facing changes
 

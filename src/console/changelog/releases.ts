@@ -13,6 +13,7 @@ export const RELEASES: readonly ReleaseEntry[] = [
     changes: [
       'Multi-request console — write several requests in one editor; Cmd+Enter or Run executes the request at the cursor.',
       'Loading a query from Library or History now appends it to the console instead of replacing what you typed.',
+      'Console text is remembered per connection, so it survives closing the tab or switching clusters.',
       'Format now tidies every request body in the editor, and Save stores the request at the cursor.',
       'Autocomplete now covers many more query types — wildcard, prefix, fuzzy, regexp, multi_match, query_string, simple_query_string, ids, nested, constant_score, dis_max and function_score.',
       'Autocomplete for more aggregations — date_histogram, histogram, percentiles, cardinality, stats, value_count, range, filter, top_hits, and nested sub-aggregations.',

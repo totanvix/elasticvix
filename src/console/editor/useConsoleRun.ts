@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Connection, HistoryEntry } from '../../lib/types';
 import type { EsResult } from '../../lib/rpc/messages';
 import { esRequest } from '../../lib/rpc/client';
@@ -6,8 +6,7 @@ import { splitBlocks, runnableBlockAt } from '../../lib/autocomplete/requestBloc
 import { addHistory } from '../../lib/storage/history';
 import { newId } from '../ids';
 import { recordEngagementRun } from '../engagement/engagementStore';
-
-const DEFAULT_TEXT = 'GET /_search\n{\n  "query": {\n    "match_all": {}\n  }\n}';
+import { DEFAULT_TEXT, loadConsoleText, persistConsoleText } from './consolePersistence';
 
 export function useConsoleRun(active: Connection | undefined) {
   const [text, setText] = useState<string>(DEFAULT_TEXT);
@@ -19,6 +18,23 @@ export function useConsoleRun(active: Connection | undefined) {
   // keystrokes — the editor's extension array depends on it staying put.
   const textRef = useRef(text);
   textRef.current = text;
+
+  const activeId = active?.id;
+
+  // Swap in the connection's own console text; a response from another
+  // cluster would be misleading, so clear it too.
+  useEffect(() => {
+    setText(activeId ? loadConsoleText(activeId) : DEFAULT_TEXT);
+    setResponse(undefined);
+  }, [activeId]);
+
+  const setTextPersisted = useCallback(
+    (next: string) => {
+      setText(next);
+      if (activeId) persistConsoleText(activeId, next);
+    },
+    [activeId],
+  );
 
   const run = useCallback(async (pos: number) => {
     if (!active) {
@@ -53,5 +69,5 @@ export function useConsoleRun(active: Connection | undefined) {
     }
   }, [active]);
 
-  return { text, setText, run, isRunning, response, ranAt };
+  return { text, setText: setTextPersisted, run, isRunning, response, ranAt };
 }
