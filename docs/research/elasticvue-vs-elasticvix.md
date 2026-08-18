@@ -19,11 +19,11 @@
 - **§2.5 Search/filter trong response** — chính là filter-by-path ở §1.5.
 - **§1.9 Cluster overview** — **tab CLUSTER** (view mặc định): health + version + summary cards + **bảng per-node RAM/heap/disk/CPU** (`_cluster/health` + `GET /` + `_cluster/stats` + `_cat/nodes`). Làm dạng tab per-node thay vì popover "bản nhẹ" ban đầu.
 - **§1.3 Export/import config** — dialog Backup & restore trên TopNav: export connections + saved queries ra JSON (checkbox include credentials, mặc định tắt), import merge theo id (`src/lib/storage/backup.ts`).
+- **§2.1 Mở rộng spec.json** (2026-08-18) — 13 query types mới (`wildcard/prefix/fuzzy/regexp/multi_match/match_phrase_prefix/query_string/simple_query_string/ids/nested/constant_score/dis_max/function_score`) + 11 aggs mới (`date_histogram/histogram/percentiles/cardinality/stats/value_count/range/filter/nested/top_hits`) + sub-aggs lồng nhau.
 
 **⚪ Chưa build**
 - **§1.1 Bulk delete** (checkbox nhiều dòng) — cố tình để lại làm follow-up.
 - **§1.4 Multi-request console** kiểu Kibana.
-- **§2.1 Mở rộng spec.json** — vẫn ~8 query types gốc; thiếu `wildcard/prefix/fuzzy/multi_match/date_histogram...`.
 - **§2.5 Diff 2 response** (cần multi-request console).
 - **§1.6–1.10** (⚠️ cân nhắc): index admin actions, query-string box, aggregations tab, i18n. *(§1.9 cluster overview đã build ở trên.)*
 - **§1.11** (❌ chưa cần): nodes/shards, snapshots, index templates/aliases, AWS IAM, vim keybindings...
@@ -133,7 +133,7 @@ Bảng tổng quan, chi tiết từng nhóm bên dưới:
 elasticvix: engine đọc syntax tree, đi theo key-path, gợi ý đúng ngữ cảnh + **tên field và type thật từ `_mapping`**, tự bật khi gõ. Không GUI miễn phí nào đang có tính năng này — đây là lý do tồn tại của sản phẩm.
 
 **Khoét sâu:**
-- ⚪ **Mở rộng `spec.json`** (CHƯA) — vẫn chỉ ~8 query types (`bool/match/match_phrase/term/terms/range/exists/match_all`) và 5 aggs (`terms/avg/sum/max/min`). Thiếu `wildcard`, `prefix`, `fuzzy`, `nested`, `multi_match`, `function_score`, `date_histogram`, `percentiles`... Mỗi entry thêm vào là autocomplete tốt hơn Elasticvue thêm một bậc.
+- 🟢 **Mở rộng `spec.json`** — **ĐÃ BUILD** (2026-08-18): 21 query types và 16 aggs, gồm `wildcard`, `prefix`, `fuzzy`, `regexp`, `nested`, `multi_match`, `function_score`, `date_histogram`, `percentiles`, sub-aggs lồng nhau. Mỗi vị trí `@field` mới cũng được lint theo mapping luôn.
 - 🟢 **Gợi ý giá trị enum** cho keyword field (chạy `terms` agg lấy top values) — **ĐÃ BUILD** (`getFieldValues.ts`), không tool nào có.
 
 ### 2.2. Saved queries + history — hơn sẵn, nên giữ khoảng cách
@@ -167,6 +167,6 @@ Lưu ý cho công bằng: local-first / không telemetry **không phải** diffe
 3. 🟢 **Response QoL** (fold + download) — effort nhỏ. → **ĐÃ BUILD** (+ filter)
 4. 🟢 **Export/import config** — chống mất dữ liệu, giữ chân user. → **ĐÃ BUILD** (2026-08-13)
 5. ⚪ **Multi-request console kiểu Kibana** — nới rộng lợi thế console. → chưa
-6. **Mở rộng autocomplete spec + enum values** — khoét sâu moat, chạy song song các mục trên. → 🟢 enum values **ĐÃ BUILD** · ⚪ mở rộng spec chưa
+6. 🟢 **Mở rộng autocomplete spec + enum values** — khoét sâu moat. → **ĐÃ BUILD** (enum values + spec 2026-08-18)
 
-**Còn lại đáng làm nhất:** §1.1 bulk delete, §1.4 multi-request console, §2.1 mở rộng spec.json.
+**Còn lại đáng làm nhất:** §1.1 bulk delete, §1.4 multi-request console.
