@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ThemeProvider } from './theme';
 import { TooltipProvider } from './ui/tooltip';
 import { AppShell, RestPanes } from './layout/ConsoleLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { splitBlocks, runnableBlockAt } from '../lib/autocomplete/requestBlocks';
 import { useConnections } from './connections/useConnections';
 import { useConsoleRun } from './editor/useConsoleRun';
-import { QueryEditor } from './editor/QueryEditor';
+import { QueryEditor, type QueryEditorHandle } from './editor/QueryEditor';
 import { ResponseView } from './editor/ResponseView';
 import { SaveQueryDialog } from './library/SaveQueryDialog';
 import { SavedQueriesPanel } from './library/SavedQueriesPanel';
@@ -28,6 +29,8 @@ function ConsoleInner() {
   const [view, setView] = useState<ConsoleView>(loadView);
   const [isSaveOpen, setSaveOpen] = useState(false);
   const [savedReloadKey, setSavedReloadKey] = useState(0);
+  const [saveRequest, setSaveRequest] = useState<{ method: string; path: string; body: string } | undefined>(undefined);
+  const editorApi = useRef<QueryEditorHandle>(null);
 
   const handleViewChange = (next: ConsoleView) => {
     setView(next);
@@ -35,7 +38,14 @@ function ConsoleInner() {
   };
 
   const loadIntoEditor = (r: { method: string; path: string; body: string }) => {
-    runner.setText(`${r.method} ${r.path}\n${r.body}`);
+    editorApi.current?.appendRequest(r);
+  };
+
+  const handleSaveClick = (pos: number) => {
+    const block = runnableBlockAt(splitBlocks(runner.text), pos);
+    if (!block) return;
+    setSaveRequest({ method: block.method, path: block.path, body: block.bodyText });
+    setSaveOpen(true);
   };
 
   return (
@@ -85,8 +95,8 @@ function ConsoleInner() {
                 onChange={runner.setText}
                 onRun={runner.run}
                 isRunning={runner.isRunning}
-                onFormat={runner.format}
-                onSave={() => setSaveOpen(true)}
+                onSave={handleSaveClick}
+                apiRef={editorApi}
               />
             }
             response={<ResponseView response={runner.response} />}
@@ -95,7 +105,7 @@ function ConsoleInner() {
       </AppShell>
       <SaveQueryDialog
         isOpen={isSaveOpen}
-        requestText={runner.text}
+        request={saveRequest}
         connectionId={conns.active?.id}
         onOpenChange={setSaveOpen}
         onSaved={() => setSavedReloadKey((k) => k + 1)}

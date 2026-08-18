@@ -53,17 +53,5 @@ export function useConsoleRun(active: Connection | undefined) {
     }
   }, [active]);
 
-  const format = useCallback(() => {
-    const nl = text.indexOf('\n');
-    if (nl === -1) return;
-    const head = text.slice(0, nl);
-    const body = text.slice(nl + 1).trim();
-    try {
-      setText(`${head}\n${JSON.stringify(JSON.parse(body), null, 2)}`);
-    } catch {
-      /* leave invalid JSON as-is */
-    }
-  }, [text]);
-
-  return { text, setText, run, isRunning, response, format, ranAt };
+  return { text, setText, run, isRunning, response, ranAt };
 }

@@ -1,11 +1,12 @@
-import { useMemo, useRef } from 'react';
+import { useImperativeHandle, useMemo, useRef, type Ref } from 'react';
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { Prec } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
+import { EditorView, keymap } from '@codemirror/view';
 import { Wand2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import type { Connection } from '../../lib/types';
+import { appendRequestEdit, formatBodyEdits } from '../../lib/autocomplete/requestBlocks';
 import { useTheme } from '../theme';
 import { makeGetFields } from './getFields';
 import { makeGetFieldValues } from './getFieldValues';
@@ -13,17 +14,21 @@ import { buildEditorExtensions } from './editorExtensions';
 import { useLintEnabled } from './useLintEnabled';
 import { LintToggle } from './LintToggle';
 
+export type QueryEditorHandle = {
+  appendRequest: (r: { method: string; path: string; body: string }) => void;
+};
+
 type Props = {
   active: Connection | undefined;
   text: string;
   onChange: (value: string) => void;
   onRun: (pos: number) => void;
   isRunning: boolean;
-  onFormat: () => void;
-  onSave: () => void;
+  onSave: (pos: number) => void;
+  apiRef?: Ref<QueryEditorHandle>;
 };
 
-export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat, onSave }: Props) {
+export function QueryEditor({ active, text, onChange, onRun, isRunning, onSave, apiRef }: Props) {
   const { theme } = useTheme();
   const { enabled: lintEnabled, toggle: toggleLint } = useLintEnabled();
 
@@ -34,6 +39,29 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
 
   const cmRef = useRef<ReactCodeMirrorRef>(null);
   const cursorPos = () => cmRef.current?.view?.state.selection.main.head ?? 0;
+
+  // Format and append dispatch through the view (not through the controlled
+  // value) so CodeMirror maps the cursor across the edits itself.
+  const handleFormat = () => {
+    const view = cmRef.current?.view;
+    if (!view) return;
+    const edits = formatBodyEdits(view.state.doc.toString());
+    if (edits.length > 0) view.dispatch({ changes: edits });
+  };
+
+  useImperativeHandle(apiRef, () => ({
+    appendRequest: (r) => {
+      const view = cmRef.current?.view;
+      if (!view) return;
+      const { from, insert, cursor } = appendRequestEdit(view.state.doc.toString(), r);
+      view.dispatch({
+        changes: { from, insert },
+        selection: { anchor: cursor },
+        effects: EditorView.scrollIntoView(cursor, { y: 'center' }),
+      });
+      view.focus();
+    },
+  }), []);
 
   const extensions = useMemo(() => {
     const getFields = makeGetFields(active);
@@ -61,12 +89,12 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
         <Button size="sm" onClick={() => onRun(cursorPos())} disabled={isRunning}>
           {isRunning ? 'Running…' : 'Run ⌘↵'}
         </Button>
-        <Button size="sm" variant="outline" onClick={onSave}>
+        <Button size="sm" variant="outline" onClick={() => onSave(cursorPos())}>
           Save
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button size="sm" variant="outline" className="w-8 px-0" onClick={onFormat} aria-label="Format">
+            <Button size="sm" variant="outline" className="w-8 px-0" onClick={handleFormat} aria-label="Format">
               <Wand2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>

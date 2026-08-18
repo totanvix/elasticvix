@@ -4,27 +4,24 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import type { SavedQuery } from '../../lib/types';
-import { parseRequestLine } from '../../lib/autocomplete/requestLine';
 import { putSavedQuery } from '../../lib/storage/savedQueries';
 import { newId } from '../ids';
 
 type Props = {
   isOpen: boolean;
-  requestText: string;
+  request: { method: string; path: string; body: string } | undefined;
   connectionId?: string;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 };
 
-export function SaveQueryDialog({ isOpen, requestText, connectionId, onOpenChange, onSaved }: Props) {
+export function SaveQueryDialog({ isOpen, request, connectionId, onOpenChange, onSaved }: Props) {
   const [name, setName] = useState('');
   const [tagsText, setTagsText] = useState('');
 
   const handleSave = async () => {
-    const nl = requestText.indexOf('\n');
-    const firstLine = nl === -1 ? requestText : requestText.slice(0, nl);
-    const { method, path } = parseRequestLine(firstLine);
-    const body = nl === -1 ? '' : requestText.slice(nl + 1);
+    if (!request) return;
+    const { method, path, body } = request;
     const now = Date.now();
     const q: SavedQuery = {
       id: newId(),
