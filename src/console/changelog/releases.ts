@@ -13,6 +13,7 @@ export const RELEASES: readonly ReleaseEntry[] = [
     changes: [
       'Autocomplete now covers many more query types — wildcard, prefix, fuzzy, regexp, multi_match, query_string, simple_query_string, ids, nested, constant_score, dis_max and function_score.',
       'Autocomplete for more aggregations — date_histogram, histogram, percentiles, cardinality, stats, value_count, range, filter, top_hits, and nested sub-aggregations.',
+      'Fix: Cmd+Enter in the REST console runs the request instead of inserting a blank line.',
     ],
   },
   {

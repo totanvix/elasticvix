@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
+import { Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { Wand2 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -26,22 +27,30 @@ export function QueryEditor({ active, text, onChange, onRun, isRunning, onFormat
   const { theme } = useTheme();
   const { enabled: lintEnabled, toggle: toggleLint } = useLintEnabled();
 
+  // Ref-backed so the extensions array doesn't rebuild (and reconfigure the
+  // editor) every time `onRun` changes identity with the editor text.
+  const onRunRef = useRef(onRun);
+  onRunRef.current = onRun;
+
   const extensions = useMemo(() => {
     const getFields = makeGetFields(active);
     const getFieldValues = makeGetFieldValues(active);
     return [
       ...buildEditorExtensions(getFields, getFieldValues, lintEnabled),
-      keymap.of([
-        {
-          key: 'Mod-Enter',
-          run: () => {
-            onRun();
-            return true;
+      // Highest precedence so basicSetup's default Mod-Enter (insertBlankLine) doesn't win.
+      Prec.highest(
+        keymap.of([
+          {
+            key: 'Mod-Enter',
+            run: () => {
+              onRunRef.current();
+              return true;
+            },
           },
-        },
-      ]),
+        ]),
+      ),
     ];
-  }, [active, onRun, lintEnabled]);
+  }, [active, lintEnabled]);
 
   return (
     <div className="flex h-full flex-col">
