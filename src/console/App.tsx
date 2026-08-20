@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ThemeProvider } from './theme';
 import { TooltipProvider } from './ui/tooltip';
 import { AppShell, RestPanes } from './layout/ConsoleLayout';
@@ -15,6 +15,14 @@ import { TopNav, type ConsoleView } from './nav/TopNav';
 import { SearchPage } from './search/SearchPage';
 import { ClusterPage } from './cluster/ClusterPage';
 import { EngagementNudge } from './engagement/EngagementNudge';
+import { WhatsNewDialog } from './changelog/WhatsNewDialog';
+import { UpdateToast } from './changelog/UpdateToast';
+import {
+  hasUnseenRelease,
+  loadLastSeenVersion,
+  saveLastSeenVersion,
+  seedLastSeenVersion,
+} from './changelog/changelogLib';
 
 const VIEW_KEY = 'elasticvix.view';
 
@@ -31,6 +39,31 @@ function ConsoleInner() {
   const [savedReloadKey, setSavedReloadKey] = useState(0);
   const [saveRequest, setSaveRequest] = useState<{ method: string; path: string; body: string } | undefined>(undefined);
   const editorApi = useRef<QueryEditorHandle>(null);
+
+  // Read inside the component: fakeBrowser throws on getManifest, so a module-scope
+  // call would break any test that pulls this file into its module graph.
+  const version = browser.runtime.getManifest().version;
+  const [lastSeen, setLastSeen] = useState(loadLastSeenVersion);
+  const [isWhatsNewOpen, setWhatsNewOpen] = useState(false);
+
+  useEffect(() => {
+    if (loadLastSeenVersion() === null) {
+      seedLastSeenVersion(version);
+      setLastSeen(version);
+    }
+  }, [version]);
+
+  const hasUnread = hasUnseenRelease(lastSeen, version);
+
+  const markSeen = () => {
+    saveLastSeenVersion(version);
+    setLastSeen(version);
+  };
+
+  const openWhatsNew = () => {
+    markSeen();
+    setWhatsNewOpen(true);
+  };
 
   const handleViewChange = (next: ConsoleView) => {
     setView(next);
@@ -61,6 +94,8 @@ function ConsoleInner() {
             onSave={conns.addOrUpdate}
             onDelete={conns.remove}
             onTest={conns.test}
+            hasUnread={hasUnread}
+            onWhatsNew={openWhatsNew}
           />
         }
       >
@@ -110,7 +145,20 @@ function ConsoleInner() {
         onOpenChange={setSaveOpen}
         onSaved={() => setSavedReloadKey((k) => k + 1)}
       />
-      <EngagementNudge />
+      {isWhatsNewOpen && (
+        <WhatsNewDialog
+          isOpen
+          version={version}
+          onOpenChange={(open) => {
+            if (!open) setWhatsNewOpen(false);
+          }}
+        />
+      )}
+      {hasUnread ? (
+        <UpdateToast version={version} onSeeWhatsNew={openWhatsNew} onDismiss={markSeen} />
+      ) : (
+        <EngagementNudge />
+      )}
     </>
   );
 }

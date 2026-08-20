@@ -19,3 +19,12 @@ export function saveLastSeenVersion(version: string): void {
 export function seedLastSeenVersion(running: string): void {
   if (localStorage.getItem(CHANGELOG_SEEN_KEY) === null) saveLastSeenVersion(running);
 }
+
+// Cap the bullets shown in the update toast — a narrow card can't hold a long
+// release. `remaining` drives a "+N more" line that points at the full dialog.
+export function previewChanges(
+  changes: readonly string[],
+  max: number,
+): { shown: readonly string[]; remaining: number } {
+  return { shown: changes.slice(0, max), remaining: Math.max(0, changes.length - max) };
+}

@@ -3,6 +3,7 @@ import {
   CHANGELOG_SEEN_KEY,
   hasUnseenRelease,
   loadLastSeenVersion,
+  previewChanges,
   saveLastSeenVersion,
   seedLastSeenVersion,
 } from './changelogLib';
@@ -41,6 +42,24 @@ describe('changelog storage', () => {
     localStorage.setItem(CHANGELOG_SEEN_KEY, '1.0.7');
     seedLastSeenVersion('1.0.9');
     expect(loadLastSeenVersion()).toBe('1.0.7');
+  });
+});
+
+describe('previewChanges', () => {
+  it('shows everything and reports no remainder below the cap', () => {
+    expect(previewChanges(['a', 'b'], 3)).toEqual({ shown: ['a', 'b'], remaining: 0 });
+  });
+  it('shows everything at exactly the cap', () => {
+    expect(previewChanges(['a', 'b', 'c'], 3)).toEqual({ shown: ['a', 'b', 'c'], remaining: 0 });
+  });
+  it('caps the list and counts the remainder above the cap', () => {
+    expect(previewChanges(['a', 'b', 'c', 'd', 'e'], 3)).toEqual({
+      shown: ['a', 'b', 'c'],
+      remaining: 2,
+    });
+  });
+  it('handles an empty change list', () => {
+    expect(previewChanges([], 3)).toEqual({ shown: [], remaining: 0 });
   });
 });
 

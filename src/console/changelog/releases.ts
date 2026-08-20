@@ -11,6 +11,7 @@ export const RELEASES: readonly ReleaseEntry[] = [
     version: '1.0.10',
     date: '2026-08-20',
     changes: [
+      'After the extension updates, a notice appears in the corner with the new version and its highlights, and a shortcut to open What\'s new.',
       'Fix: accepting a field-value suggestion now replaces what you typed instead of appending to it, and the list narrows to values matching your prefix — even for values with backslashes, @ or spaces (like PHP class names).',
     ],
   },

@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
 import type { Connection } from '../../lib/types';
 import { ClusterSelector } from '../connections/ClusterSelector';
 import { SettingsMenu } from '../settings/SettingsMenu';
 import { ConnectionStatusChip } from '../connections/ConnectionStatusChip';
 import { useConnectionStatus } from '../connections/useConnectionStatus';
 import type { TestResult } from '../connections/useConnections';
-import { WhatsNewDialog } from '../changelog/WhatsNewDialog';
-import { hasUnseenRelease, loadLastSeenVersion, saveLastSeenVersion, seedLastSeenVersion } from '../changelog/changelogLib';
 
 export type ConsoleView = 'cluster' | 'search' | 'rest';
 
@@ -19,6 +16,8 @@ type Props = {
   onSave: (conn: Connection) => void;
   onDelete: (id: string) => void;
   onTest: (conn: Connection) => Promise<TestResult>;
+  hasUnread: boolean;
+  onWhatsNew: () => void;
 };
 
 const NAV_ITEMS: { view: ConsoleView; label: string }[] = [
@@ -27,28 +26,8 @@ const NAV_ITEMS: { view: ConsoleView; label: string }[] = [
   { view: 'rest', label: 'REST' },
 ];
 
-export function TopNav({ view, onViewChange, connections, active, onSelect, onSave, onDelete, onTest }: Props) {
+export function TopNav({ view, onViewChange, connections, active, onSelect, onSave, onDelete, onTest, hasUnread, onWhatsNew }: Props) {
   const status = useConnectionStatus(active);
-  // Read inside the component: fakeBrowser throws on getManifest, so a module-scope
-  // call would break any test that pulls this file into its module graph.
-  const version = browser.runtime.getManifest().version;
-  const [lastSeen, setLastSeen] = useState(loadLastSeenVersion);
-  const [isWhatsNewOpen, setWhatsNewOpen] = useState(false);
-
-  useEffect(() => {
-    if (loadLastSeenVersion() === null) {
-      seedLastSeenVersion(version);
-      setLastSeen(version);
-    }
-  }, [version]);
-
-  const hasUnread = hasUnseenRelease(lastSeen, version);
-
-  const openWhatsNew = () => {
-    saveLastSeenVersion(version);
-    setLastSeen(version);
-    setWhatsNewOpen(true);
-  };
 
   return (
     <>
@@ -84,16 +63,7 @@ export function TopNav({ view, onViewChange, connections, active, onSelect, onSa
           </button>
         ))}
       </nav>
-      <SettingsMenu onWhatsNew={openWhatsNew} hasUnseenRelease={hasUnread} />
-      {isWhatsNewOpen && (
-        <WhatsNewDialog
-          isOpen
-          version={version}
-          onOpenChange={(open) => {
-            if (!open) setWhatsNewOpen(false);
-          }}
-        />
-      )}
+      <SettingsMenu onWhatsNew={onWhatsNew} hasUnseenRelease={hasUnread} />
     </>
   );
 }
