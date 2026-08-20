@@ -1,6 +1,8 @@
-import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { json } from '@codemirror/lang-json';
+import { syntaxTree } from '@codemirror/language';
+import type { SyntaxNode } from '@lezer/common';
 import type { FlatField } from '../types';
 import { spec as defaultSpec, type SpecData, type BodyNode, type ValueDesc } from './spec';
 import { resolveKeyPath } from './keyPath';
@@ -123,6 +125,54 @@ const KIND_TO_CM: Record<CompletionItem['kind'], string> = {
   value: 'enum',
 };
 
+// Start of the JSON string content (just past the opening quote) enclosing
+// `pos`, or null when `pos` is not inside a string's editable span. This is the
+// completion's replacement start: without it, `matchBefore(/[\w.]*/)` stops at
+// the first backslash/@/space, so a value like `App\\Viec\\Models\\Worker\\` is
+// appended after — not replaced by — the accepted suggestion, and nothing filters.
+// `resolveInner(pos, -1)` also enters a node that *ends* at pos, so a caret just
+// past the closing quote would map onto the string and let an accept eat that
+// quote — hence the explicit span check.
+function stringContentStart(state: EditorState, pos: number): number | null {
+  for (let n: SyntaxNode | null = syntaxTree(state).resolveInner(pos, -1); n; n = n.parent) {
+    if (n.name === 'String' || n.name === 'PropertyName') {
+      const terminated = n.to - n.from >= 2 && state.sliceDoc(n.to - 1, n.to) === '"';
+      const contentEnd = terminated ? n.to - 1 : n.to;
+      return pos >= n.from + 1 && pos <= contentEnd ? n.from + 1 : null;
+    }
+  }
+  return null;
+}
+
+// Value-string replacement start for the REST console (multi-request document).
+export function docStringStart(docText: string, pos: number): number | null {
+  const block = bodyBlockAt(docText, pos);
+  if (!block) return null;
+  const state = EditorState.create({ doc: block.bodyText, extensions: [json()] });
+  const start = stringContentStart(state, pos - block.bodyFrom);
+  return start === null ? null : start + block.bodyFrom;
+}
+
+// Value-string replacement start for the Search page (body-only document).
+export function bodyStringStart(docText: string, pos: number): number | null {
+  const state = EditorState.create({ doc: docText, extensions: [json()] });
+  return stringContentStart(state, pos);
+}
+
+// Escape a raw value so it matches the doc text inside a `"..."`: the completion
+// runs inside a JSON string, so the label must be escaped to both filter against
+// the already-typed prefix and insert as valid JSON.
+export function escapeJsonString(value: string): string {
+  return JSON.stringify(value).slice(1, -1);
+}
+
+// A CodeMirror option whose label is escaped for the JSON-string context, with
+// the readable raw value kept as displayLabel when they differ.
+function toCompletion(rawLabel: string, type: string, detail?: string): Completion {
+  const label = escapeJsonString(rawLabel);
+  return label === rawLabel ? { label, type, detail } : { label, displayLabel: rawLabel, type, detail };
+}
+
 // Compute completions for a body-only document (Search page): the whole doc is
 // the JSON body of a `_search` request — there is no request line to strip.
 export function bodyCompletions(docText: string, pos: number, fields: FlatField[]): CompletionItem[] {
@@ -159,22 +209,19 @@ export function bodyCompletionSource(
     const docText = ctx.state.doc.toString();
     const items = bodyCompletions(docText, ctx.pos, fields);
     const word = ctx.matchBefore(/[\w.]*/);
-    const from = word ? word.from : ctx.pos;
+    const from = bodyStringStart(docText, ctx.pos) ?? (word ? word.from : ctx.pos);
 
     if (items.length === 0) {
       const field = bodyValueField(docText, ctx.pos, fields);
       if (field) {
         const values = await getFieldValues(field);
         if (values.length > 0) {
-          return { from, options: values.map((v) => ({ label: v, type: 'enum' })) };
+          return { from, options: values.map((v) => toCompletion(v, 'enum')) };
         }
       }
       return null;
     }
-    return {
-      from,
-      options: items.map((it) => ({ label: it.label, type: KIND_TO_CM[it.kind], detail: it.detail })),
-    };
+    return { from, options: items.map((it) => toCompletion(it.label, KIND_TO_CM[it.kind], it.detail)) };
   };
 }
 
@@ -192,21 +239,18 @@ export function esCompletionSource(
     const fields = await getFields(block.index);
     const items = docCompletions(docText, ctx.pos, fields);
     const word = ctx.matchBefore(/[\w.]*/);
-    const from = word ? word.from : ctx.pos;
+    const from = docStringStart(docText, ctx.pos) ?? (word ? word.from : ctx.pos);
 
     if (items.length === 0) {
       const field = docValueField(docText, ctx.pos, fields);
       if (field) {
         const values = await getFieldValues(block.index, field);
         if (values.length > 0) {
-          return { from, options: values.map((v) => ({ label: v, type: 'enum' })) };
+          return { from, options: values.map((v) => toCompletion(v, 'enum')) };
         }
       }
       return null;
     }
-    return {
-      from,
-      options: items.map((it) => ({ label: it.label, type: KIND_TO_CM[it.kind], detail: it.detail })),
-    };
+    return { from, options: items.map((it) => toCompletion(it.label, KIND_TO_CM[it.kind], it.detail)) };
   };
 }

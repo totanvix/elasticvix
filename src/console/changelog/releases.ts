@@ -8,6 +8,13 @@ export type ReleaseEntry = {
 // creates the tag commit, so anything added later lands outside the tag.
 export const RELEASES: readonly ReleaseEntry[] = [
   {
+    version: '1.0.10',
+    date: '2026-08-20',
+    changes: [
+      'Fix: accepting a field-value suggestion now replaces what you typed instead of appending to it, and the list narrows to values matching your prefix — even for values with backslashes, @ or spaces (like PHP class names).',
+    ],
+  },
+  {
     version: '1.0.9',
     date: '2026-08-18',
     changes: [

@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
+import { EditorState } from '@codemirror/state';
+import { json } from '@codemirror/lang-json';
 import { spec } from './spec';
 import {
   resolveCompletions, docCompletions, bodyCompletions, resolveValueField,
-  bodyValueField, docValueField,
+  bodyValueField, docValueField, docStringStart, bodyStringStart, escapeJsonString,
+  esCompletionSource, bodyCompletionSource,
 } from './engine';
 import type { FlatField } from '../types';
 
@@ -237,5 +241,82 @@ describe('bodyValueField / docValueField', () => {
   it('docValueField returns undefined on the request line', () => {
     const doc = 'GET /logs/_search\n{ }';
     expect(docValueField(doc, 3, f)).toBeUndefined();
+  });
+});
+
+describe('escapeJsonString', () => {
+  it('doubles backslashes for the JSON-string context', () => {
+    // arg = App\Viec (one backslash) → App\\Viec (two, as it appears in the doc)
+    expect(escapeJsonString('App\\Viec')).toBe('App\\\\Viec');
+  });
+  it('is a no-op for plain values', () => {
+    expect(escapeJsonString('active')).toBe('active');
+  });
+  it('escapes an embedded quote', () => {
+    expect(escapeJsonString('a"b')).toBe('a\\"b');
+  });
+});
+
+describe('string content start (replacement range for values with specials)', () => {
+  it('returns the content start when the caret is inside the value string', () => {
+    const typed = 'App\\\\Viec'; // doc form: App\\Viec
+    const doc = `{ "term": { "t": "${typed}" } }`;
+    const pos = doc.indexOf(typed) + typed.length;
+    expect(bodyStringStart(doc, pos)).toBe(doc.indexOf(typed));
+  });
+  it('returns null when the caret sits just past the closing quote (never eat it)', () => {
+    const doc = '{ "term": { "t": "abc" } }';
+    const closeQuote = doc.indexOf('"abc"') + 4;
+    expect(bodyStringStart(doc, closeQuote + 1)).toBeNull();
+  });
+  it('offsets into the request-block body for the REST console', () => {
+    const typed = 'a\\\\b'; // doc form: a\\b
+    const doc = `POST /x/_search\n{ "term": { "t": "${typed}" } }`;
+    const pos = doc.indexOf(typed) + typed.length;
+    expect(docStringStart(doc, pos)).toBe(doc.indexOf(typed));
+  });
+  it('returns null on a request line (no body to complete)', () => {
+    const doc = 'GET /logs/_search\n{ }';
+    expect(docStringStart(doc, 3)).toBeNull();
+  });
+});
+
+describe('esCompletionSource — accepting a keyword value with backslashes', () => {
+  const raw = 'App\\Viec\\Models\\Worker\\Ekyc'; // ES value, single backslashes
+  const fields: FlatField[] = [{ path: 'auditable_type', type: 'keyword' }];
+  const getFields = async () => fields;
+  const getFieldValues = async () => [raw, 'App\\Models\\Worker'];
+
+  // The value as it sits in the editor: a PHP class in a JSON string (backslashes doubled).
+  const typed = 'App\\\\Viec\\\\Models\\\\Worker\\\\'; // doc form: App\\Viec\\Models\\Worker\\
+  const doc = `POST /audit/_search\n{ "query": { "match": { "auditable_type": "${typed}" } } }`;
+  const pos = doc.indexOf(typed) + typed.length; // caret right before the closing quote
+
+  it('replaces the whole typed prefix instead of appending after it', async () => {
+    const source = esCompletionSource(getFields, getFieldValues);
+    const ctx = new CompletionContext(EditorState.create({ doc, extensions: [json()] }), pos, true);
+    const res = (await source(ctx)) as CompletionResult;
+
+    // `from` lands right after the opening quote, so accept overwrites the prefix.
+    expect(doc.slice(res.from, pos)).toBe(typed);
+    const first = res.options[0]!;
+    expect(first.label).toBe(escapeJsonString(raw)); // escaped: filters against + inserts into JSON
+    expect((first as { displayLabel?: string }).displayLabel).toBe(raw); // readable in the dropdown
+  });
+});
+
+describe('bodyCompletionSource — keyword value on the Search page', () => {
+  it('escapes the value and anchors `from` after the opening quote', async () => {
+    const raw = 'a\\b';
+    const fields: FlatField[] = [{ path: 'status', type: 'keyword' }];
+    const source = bodyCompletionSource(async () => fields, async () => [raw]);
+    const typed = 'a\\\\'; // doc form: a\\
+    const doc = `{ "query": { "term": { "status": "${typed}" } } }`;
+    const pos = doc.indexOf(`"${typed}"`) + 1 + typed.length;
+    const ctx = new CompletionContext(EditorState.create({ doc, extensions: [json()] }), pos, true);
+    const res = (await source(ctx)) as CompletionResult;
+
+    expect(doc.slice(res.from, pos)).toBe(typed);
+    expect(res.options[0]!.label).toBe(escapeJsonString(raw));
   });
 });
